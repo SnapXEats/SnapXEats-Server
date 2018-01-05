@@ -1,0 +1,14 @@
+swagger:
+  info:
+    title: "API Documentation"
+    description: "This server is for give recommendation food dish near by places to user."
+    contact:
+      email: "nikesh.rathod@synerzip.com"
+    version: "1.0"
+  basePath: "/"
+  schemes:
+    - "http"
+  consumes:
+    - "application/json"
+  produces:
+    - "application/json"
