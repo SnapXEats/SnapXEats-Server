@@ -7,6 +7,7 @@ You will need these tools to set up a local development environment:
 * [NPM](https://www.npmjs.com/)
 * [NodeJS](https://nodejs.org/)
 * [Mysql Server](https://www.mysql.com/)
+* [Sequelize.Js] (ORM)
 
 ### Setup & init
 
