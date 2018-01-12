@@ -10,8 +10,10 @@ module.exports = function (sequelize, DataTypes) {
       defaultValue: DataTypes.UUIDV4
     },
     restaurant_google_id : {
-      type: DataTypes.TEXT,
-      allowNull: false
+      type: DataTypes.STRING,
+      unique : {
+        msg : 'The specified restaurant google id is already exist.'
+      }
     },
     restaurant_place_id : {
       type: DataTypes.TEXT,
@@ -37,12 +39,14 @@ module.exports = function (sequelize, DataTypes) {
       allowNull : false
     },
     restaurant_contact_no : {
-      type : DataTypes.BIGINT,
-      allowNull : false
+      type : DataTypes.STRING
     },
     restaurant_rating : {
       type : DataTypes.FLOAT,
       allowNull : false
+    },
+    restaurant_image_url : {
+      type: DataTypes.TEXT
     }
   }, {
     timestamps: true,
