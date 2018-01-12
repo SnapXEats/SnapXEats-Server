@@ -19,15 +19,11 @@ module.exports = function (sequelize, DataTypes) {
         onDelete: 'cascade'
       }
     },
-    restaurant_open_time : {
+    restaurant_open_close_time : {
       type: DataTypes.STRING,
       allowNull: false
     },
-    restaurant_close_time : {
-      type: DataTypes.STRING,
-      allowNull: false
-    },
-    restaurant_time_day : {
+    day_of_week : {
       type: DataTypes.STRING,
       allowNull: false
     }
