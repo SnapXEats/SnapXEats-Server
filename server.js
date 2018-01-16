@@ -1,6 +1,6 @@
 'use strict';
 
-require('dotenv').load({silent: true});
+require('dotenv').load({ silent: true });
 
 const req = require;
 const express    = require('express');
@@ -35,7 +35,6 @@ const formatter = (args) => {
   const date = moment().format('D/MM/YYYY hh:mm:ss');
   const msg = `${date} - ${args.level}  - ${args.message} -
   ${JSON.stringify(args.meta, null, 2)}`;
-  console.log('msg', msg);
   return msg;
 };
 
@@ -112,8 +111,8 @@ const startServer = () => {
         cluster.fork();
       });
     } else {
-      http.createServer(app).listen(config.port, config.ip,  () => {
-        console.log('Express server listening on %d, in %s mode', config.port, app.get('env'));
+      http.createServer(app).listen(config.api.port, config.ip,  () => {
+        console.log('Express server listening on %d, in %s mode', config.api.port, app.get('env'));
       });
     }
   } else {
