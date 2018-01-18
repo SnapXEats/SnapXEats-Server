@@ -12,7 +12,7 @@ const unique = require('array-unique');
 
 const key = process.env.googleKey;
 
-const sleep = require('sleep');
+const sleep = require('system-sleep');
 
 const type = require('type-of-is');
 
@@ -82,7 +82,7 @@ function getRestaurant(latitude, longitude, distance, googleIds, pagetoken) {
     let pgtoken;
     let result;
     if (pagetoken) {
-      sleep.usleep(1000000);
+      sleep(1000);
       adr = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${distance}&type=restaurant&key=${key}&pagetoken=${pagetoken}`;
       result = yield getPlacesResult(adr, googleIds);
     } else {
@@ -171,7 +171,7 @@ function findRestaurantData(restaurantArray, cusineArray) {
 
 /**
  * @swagger
- * /api/v1/dishes:
+ * /api/v1/Dishes:
  *   get:
  *     summary: List all dishes on base of user preferences
  *     description: List all dishes as an JSON array
@@ -192,7 +192,7 @@ function findRestaurantData(restaurantArray, cusineArray) {
  *          type: string
  *        description: user's cuisine preferences
  *     tags:
- *       - dishes
+ *       - Dishes
  *     produces:
  *       - application/json
  *     responses:

@@ -9,7 +9,7 @@ const co = require('co');
 /**
  * @swagger
  * definition:
- *   cusine_info:
+ *   cuisine_info:
  *     type: object
  *     required:
  *       - cusine_name
@@ -23,12 +23,12 @@ const co = require('co');
 
 /**
  * @swagger
- * /api/v1/cusine:
+ * /api/v1/cuisine:
  *   get:
- *     summary: List all cusines
- *     description: List all cusines as an JSON array
+ *     summary: List all cuisines
+ *     description: List all cuisines as an JSON array
  *     tags:
- *       - cusines
+ *       - Cuisines
  *     produces:
  *       - application/json
  *     responses:
@@ -37,7 +37,7 @@ const co = require('co');
  *         schema:
  *           type: array
  *           items:
- *             "$ref": "#/definitions/cusine_info"
+ *             "$ref": "#/definitions/cuisine_info"
  */
 exports.getCusineList = function (req, res) {
   return co(function* () {
