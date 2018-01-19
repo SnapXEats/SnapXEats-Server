@@ -165,6 +165,16 @@ exports.signUp = function (req, res) {
         social_platform : socialPlatform
       };
       userInformation = yield createUser(userInfo);
+    } else if (socialPlatform === CONSTANTS.SOCIAL_PLATFORM.INSTAGRAM) {
+      data = yield getUserData.getInstagramUserInfo(socialId, accessToken);
+      const userInfo = {
+        social_id : socialId,
+        name : data.full_name,
+        access_token : accessToken,
+        user_image_url : data.profile_picture,
+        social_platform : socialPlatform
+      };
+      userInformation = yield createUser(userInfo);
     }
     const token = yield issueToken(userInformation.user_id, userInformation.user_type);
     return ({
