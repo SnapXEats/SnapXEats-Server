@@ -28,10 +28,10 @@ module.exports = function (sequelize, DataTypes) {
 				onDelete: 'cascade'
 			}
 		},
-		is_cusine_like : {
+		is_cuisine_like : {
 			type: DataTypes.BOOLEAN
 		},
-		is_cusine_favourite : {
+		is_cuisine_favourite : {
 			type: DataTypes.BOOLEAN
 		}
 	}, {
