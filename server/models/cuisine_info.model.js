@@ -1,19 +1,19 @@
 'use strict';
 
 module.exports = function (sequelize, DataTypes) {
-  const cusineInfo = sequelize.define('cusineInfo', {
+  const cuisineInfo = sequelize.define('cuisineInfo', {
 
-    cusine_info_id: {
+    cuisine_info_id: {
       type:  DataTypes.UUID,
       allowNull: false,
       primaryKey: true,
       defaultValue: DataTypes.UUIDV4
     },
-    cusine_name : {
+    cuisine_name : {
       type: DataTypes.STRING,
       allowNull: false
     },
-    cusine_image_url : {
+    cuisine_image_url : {
       type: DataTypes.STRING,
       allowNull: false
     }
@@ -22,8 +22,8 @@ module.exports = function (sequelize, DataTypes) {
     paranoid: true,
     underscored: true,
     freezeTableName:true,
-    tableName:'cusineInfo'
+    tableName:'cuisineInfo'
   });
 
-  return cusineInfo;
+  return cuisineInfo;
 };

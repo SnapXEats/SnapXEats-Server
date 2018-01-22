@@ -12,12 +12,15 @@ const co = require('co');
  *   cuisine_info:
  *     type: object
  *     required:
+ *       - cuisine_info_id
  *       - cusine_name
  *       - cusine_image_url
  *     properties:
- *       cusine_name:
+ *       cuisine_info_id:
  *         type: string
- *       cusine_image_url:
+ *       cuisine_name:
+ *         type: string
+ *       cuisine_image_url:
  *         type: string
  */
 
@@ -39,10 +42,10 @@ const co = require('co');
  *           items:
  *             "$ref": "#/definitions/cuisine_info"
  */
-exports.getCusineList = function (req, res) {
+exports.getCuisineList = function (req, res) {
   return co(function* () {
-    return yield db.cusineInfo.findAll({
-      attributes : ['cusine_info_id', 'cusine_name', 'cusine_image_url']
+    return yield db.cuisineInfo.findAll({
+      attributes : ['cuisine_info_id', 'cuisine_name', 'cuisine_image_url']
     });
   }).then((cusineList) => {
     res.status(200)
