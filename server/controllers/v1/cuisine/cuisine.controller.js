@@ -44,9 +44,10 @@ const co = require('co');
  */
 exports.getCuisineList = function (req, res) {
   return co(function* () {
-    return yield db.cuisineInfo.findAll({
+    const cusineList = yield db.cuisineInfo.findAll({
       attributes : ['cuisine_info_id', 'cuisine_name', 'cuisine_image_url']
     });
+    return ({ cusineList });
   }).then((cusineList) => {
     res.status(200)
       .json(cusineList);
