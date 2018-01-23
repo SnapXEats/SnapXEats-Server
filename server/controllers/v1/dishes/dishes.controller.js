@@ -160,13 +160,51 @@ function findRestaurantData(restaurantArray, cusineArray) {
 /**
  * @swagger
  * definition:
+ *   dishLabelInfo:
+ *     type: object
+ *     required:
+ *       - dish_label
+ *     properties:
+ *       dish_label:
+ *         type: string
+ */
+
+/**
+ * @swagger
+ * definition:
+ *   dishInfo:
+ *     type: object
+ *     required:
+ *       - restaurant_dish_id
+ *       - dish_image_url
+ *     properties:
+ *       restaurant_dish_id:
+ *         type: string
+ *       dish_image_url:
+ *         type: string
+ *       restaurantDishLabels:
+ *         type: array
+ *         items:
+ *           $ref: "#/definitions/dishLabelInfo"
+ */
+
+/**
+ * @swagger
+ * definition:
  *   restaurantInfo:
  *     type: object
  *     required:
+ *       - restaurant_info_id
  *       - restaurant_name
  *     properties:
+ *       restaurant_info_id:
+ *         type: string
  *       restaurant_name:
  *         type: string
+ *       restaurantDishes:
+ *         type: array
+ *         items:
+ *           $ref: "#/definitions/dishInfo"
  */
 
 /**
