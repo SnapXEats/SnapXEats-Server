@@ -13,8 +13,8 @@ const co = require('co');
  *     type: object
  *     required:
  *       - cuisine_info_id
- *       - cusine_name
- *       - cusine_image_url
+ *       - cuisine_name
+ *       - cuisine_image_url
  *     properties:
  *       cuisine_info_id:
  *         type: string
@@ -44,13 +44,13 @@ const co = require('co');
  */
 exports.getCuisineList = function (req, res) {
   return co(function* () {
-    const cusineList = yield db.cuisineInfo.findAll({
+    const cuisineList = yield db.cuisineInfo.findAll({
       attributes : ['cuisine_info_id', 'cuisine_name', 'cuisine_image_url']
     });
-    return ({ cusineList });
-  }).then((cusineList) => {
+    return ({ cuisineList });
+  }).then((cuisineList) => {
     res.status(200)
-      .json(cusineList);
+      .json(cuisineList);
   }).catch((err) => {
     res.status(400).json({
       message: err.message
