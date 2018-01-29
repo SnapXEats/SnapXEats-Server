@@ -11,6 +11,10 @@ module.exports = function (sequelize, DataTypes) {
 		food_name: {
 			type: DataTypes.STRING,
 			allowNull: false
+		},
+		food_image_url : {
+			type: DataTypes.STRING,
+			allowNull: false
 		}
 	}, {
 		timestamps: true,
