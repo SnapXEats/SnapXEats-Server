@@ -34,6 +34,12 @@ const co = require('co');
  *       - FoodTypes
  *     produces:
  *       - application/json
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         description: an authorization header (Bearer eyJhbGciOiJI...)
+ *         required: true
+ *         type: string
  *     responses:
  *       200:
  *         description: "successful operation"
