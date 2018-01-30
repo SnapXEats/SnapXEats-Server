@@ -81,6 +81,80 @@ function insertFoodTypePreferences(userFoodPreferences, userId) {
 	});
 }
 
+/**
+ * @swagger
+ * definition:
+ *   cusinePreferences:
+ *     type: object
+ *     properties:
+ *       cuisine_info_id:
+ *         type: string
+ *       is_cuisine_like:
+ *         type: boolean
+ *       is_cuisine_favourite:
+ *         type: boolean
+ */
+
+/**
+ * @swagger
+ * definition:
+ *   foodPreferences:
+ *     type: object
+ *     properties:
+ *       food_type_info_id:
+ *         type: string
+ *       is_food_like:
+ *         type: boolean
+ *       is_food_favourite:
+ *         type: boolean
+ */
+
+/**
+ * @swagger
+ * paths:
+ *  /api/v1/userPreferences:
+ *    post:
+ *      summary: set users preferences.
+ *      tags:
+ *        - User Preference
+ *      description: Set user preferences as a JSON object
+ *      consumes:
+ *        - application/json
+ *      parameters:
+ *        - in: header
+ *          name: Authorization
+ *          description: an authorization header (Bearer eyJhbGciOiJI...)
+ *          required: true
+ *          type: string
+ *        - in: body
+ *          name: user preferences
+ *          description: Set user preferences.
+ *          schema:
+ *            type: object
+ *            properties:
+ *              restaurant_rating:
+ *                type: string
+ *              restaurant_price:
+ *                type: string
+ *              restaurant_distance:
+ *                type: string
+ *              sort_by_distance:
+ *                type: boolean
+ *              sort_by_rating:
+ *                type: boolean
+ *              user_cuisine_preferences:
+ *                type: array
+ *                items:
+ *                  "$ref": "#/definitions/cusinePreferences"
+ *              user_food_preferences:
+ *                type: array
+ *                items:
+ *                  "$ref": "#/definitions/foodPreferences"
+ *      responses:
+ *        201:
+ *          description: Created
+ */
+
 exports.setUserPreferences = function (req, res) {
 	return co(function* () {
 		const userCuisinePreferences = req.body.user_cuisine_preferences;
