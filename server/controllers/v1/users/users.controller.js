@@ -63,6 +63,7 @@ const createUser = function (userInformation) {
   });
 };
 
+
 /**
  * Returns a jwt token signed by the app secret
  */
@@ -77,7 +78,30 @@ function issueToken(id, userType) {
         if (err) {
           reject(err);
         }
-        resolve(token);
+        db.userToken.find({
+          where : {
+            user_id : id
+          }
+        }).then((userTokenInfo) => {
+          if (userTokenInfo) {
+						userTokenInfo.updateAttributes({
+							access_token : token
+            }).then(() => {
+              resolve(token);
+            }).catch((error) => {
+              reject(error);
+            });
+          } else {
+            db.userToken.create({
+              access_token : token,
+              user_id : id
+            }).then(() => {
+							resolve(token);
+						}).catch((error) => {
+							reject(error);
+						});
+          }
+        });
       });
   });
 }
