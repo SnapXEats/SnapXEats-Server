@@ -212,3 +212,29 @@ exports.signUp = function (req, res) {
     res.status(400).json(err);
   });
 };
+
+
+exports.saveUserAddresses = function (req, res) {
+	return co(function* () {
+		const userAddress = req.body.address;
+		const userAddressType = req.body.address_type;
+		const userId = req.decodedData.user_id;
+		if (userAddress && userAddressType) {
+			yield db.userAddresses.create({
+				address :userAddress,
+				address_type: userAddressType,
+				user_id : userId
+      });
+		}
+		return ({
+			message: 'user address inserted succesfully'
+		});
+	}).then((userAddressMessage) => {
+		res.status(200)
+			.json(userAddressMessage);
+	}).catch((err) => {
+		res.status(400).json({
+			message: err.message
+		});
+	});
+};
