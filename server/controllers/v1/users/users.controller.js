@@ -213,6 +213,40 @@ exports.signUp = function (req, res) {
   });
 };
 
+/**
+ * @swagger
+ * paths:
+ *  /api/v1/users/address:
+ *    post:
+ *      summary: Create a user address.
+ *      tags:
+ *        - Users
+ *      description: Add a user address as a JSON object
+ *      consumes:
+ *        - application/json
+ *      parameters:
+ *        - in: header
+ *          name: Authorization
+ *          description: an authorization header (Bearer eyJhbGciOiJI...)
+ *          required: true
+ *          type: string
+ *        - in: body
+ *          name: Address
+ *          description: User address to create.
+ *          schema:
+ *            type: object
+ *            required:
+ *              - address
+ *              - address_type
+ *            properties:
+ *              address:
+ *                type: string
+ *              address_type:
+ *                type: string
+ *      responses:
+ *        201:
+ *          description: Created
+ */
 
 exports.saveUserAddresses = function (req, res) {
 	return co(function* () {
