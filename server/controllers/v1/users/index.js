@@ -6,5 +6,6 @@ const auth = require('./../../../../lib/auth');
 
 router.post('/', controller.signUp);
 router.post('/address', auth.isAuthenticated(), controller.saveUserAddresses);
+router.get('/address/:userId', auth.isAuthenticated(), controller.getUserAddresses);
 
 module.exports = router;
