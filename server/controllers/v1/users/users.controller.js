@@ -272,3 +272,69 @@ exports.saveUserAddresses = function (req, res) {
 		});
 	});
 };
+
+/**
+ * @swagger
+ * definition:
+ *   address:
+ *     type: object
+ *     properties:
+ *       user_address_id:
+ *         type: string
+ *       address:
+ *         type: string
+ *       adress_type:
+ *         type: string
+ */
+
+/**
+ * @swagger
+ * /api/v1/users/address/{userId}:
+ *   get:
+ *     summary: List user's all addresses
+ *     description: List user's all addresses as an JSON array
+ *     tags:
+ *       - Users
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         description: an authorization header (Bearer eyJhbGciOiJI...)
+ *         required: true
+ *         type: string
+ *       - in: path
+ *         name: userId
+ *         description: User's unique id
+ *         required: true
+ *         type: string
+ *     responses:
+ *       200:
+ *         description: "successful operation"
+ *         schema:
+ *           type: array
+ *           items:
+ *             "$ref": "#/definitions/address"
+ */
+
+exports.getUserAddresses = function (req, res) {
+	return co(function* () {
+		const userId = req.params.userId;
+		const userAddresses = yield db.userAddresses.findAll({
+			attributes : ['user_address_id', 'address', 'address_type'],
+			where : {
+				user_id: userId
+			}
+		});
+		return ({
+			userAddresses
+		});
+	}).then((userAddresses) => {
+		res.status(200)
+			.json(userAddresses);
+	}).catch((err) => {
+		res.status(400).json({
+			message: err.message
+		});
+	});
+};
