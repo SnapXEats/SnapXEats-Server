@@ -63,6 +63,7 @@ const createUser = function (userInformation) {
   });
 };
 
+
 /**
  * Returns a jwt token signed by the app secret
  */
@@ -77,7 +78,30 @@ function issueToken(id, userType) {
         if (err) {
           reject(err);
         }
-        resolve(token);
+        db.userToken.find({
+          where : {
+            user_id : id
+          }
+        }).then((userTokenInfo) => {
+          if (userTokenInfo) {
+						userTokenInfo.updateAttributes({
+							access_token : token
+            }).then(() => {
+              resolve(token);
+            }).catch((error) => {
+              reject(error);
+            });
+          } else {
+            db.userToken.create({
+              access_token : token,
+              user_id : id
+            }).then(() => {
+							resolve(token);
+						}).catch((error) => {
+							reject(error);
+						});
+          }
+        });
       });
   });
 }
@@ -187,4 +211,130 @@ exports.signUp = function (req, res) {
   }).catch((err) => {
     res.status(400).json(err);
   });
+};
+
+/**
+ * @swagger
+ * paths:
+ *  /api/v1/users/address:
+ *    post:
+ *      summary: Create a user address.
+ *      tags:
+ *        - Users
+ *      description: Add a user address as a JSON object
+ *      consumes:
+ *        - application/json
+ *      parameters:
+ *        - in: header
+ *          name: Authorization
+ *          description: an authorization header (Bearer eyJhbGciOiJI...)
+ *          required: true
+ *          type: string
+ *        - in: body
+ *          name: Address
+ *          description: User address to create.
+ *          schema:
+ *            type: object
+ *            required:
+ *              - address
+ *              - address_type
+ *            properties:
+ *              address:
+ *                type: string
+ *              address_type:
+ *                type: string
+ *      responses:
+ *        201:
+ *          description: Created
+ */
+
+exports.saveUserAddresses = function (req, res) {
+	return co(function* () {
+		const userAddress = req.body.address;
+		const userAddressType = req.body.address_type;
+		const userId = req.decodedData.user_id;
+		if (userAddress && userAddressType) {
+			yield db.userAddresses.create({
+				address :userAddress,
+				address_type: userAddressType,
+				user_id : userId
+      });
+		}
+		return ({
+			message: 'user address inserted succesfully'
+		});
+	}).then((userAddressMessage) => {
+		res.status(200)
+			.json(userAddressMessage);
+	}).catch((err) => {
+		res.status(400).json({
+			message: err.message
+		});
+	});
+};
+
+/**
+ * @swagger
+ * definition:
+ *   address:
+ *     type: object
+ *     properties:
+ *       user_address_id:
+ *         type: string
+ *       address:
+ *         type: string
+ *       adress_type:
+ *         type: string
+ */
+
+/**
+ * @swagger
+ * /api/v1/users/address/{userId}:
+ *   get:
+ *     summary: List user's all addresses
+ *     description: List user's all addresses as an JSON array
+ *     tags:
+ *       - Users
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         description: an authorization header (Bearer eyJhbGciOiJI...)
+ *         required: true
+ *         type: string
+ *       - in: path
+ *         name: userId
+ *         description: User's unique id
+ *         required: true
+ *         type: string
+ *     responses:
+ *       200:
+ *         description: "successful operation"
+ *         schema:
+ *           type: array
+ *           items:
+ *             "$ref": "#/definitions/address"
+ */
+
+exports.getUserAddresses = function (req, res) {
+	return co(function* () {
+		const userId = req.params.userId;
+		const userAddresses = yield db.userAddresses.findAll({
+			attributes : ['user_address_id', 'address', 'address_type'],
+			where : {
+				user_id: userId
+			}
+		});
+		return ({
+			userAddresses
+		});
+	}).then((userAddresses) => {
+		res.status(200)
+			.json(userAddresses);
+	}).catch((err) => {
+		res.status(400).json({
+			message: err.message
+		});
+	});
 };

@@ -1,10 +1,10 @@
 environment: dev
 api:
   port: 3000
-db:=
-  username: dev_uname
-  password: dev_pwd
-  database: dev_DB
-  host: dev_hostname
+db:
+  username: root
+  password: Niks@123
+  database: snapxeats
+  host: localhost
   wipe: false
   logging: false

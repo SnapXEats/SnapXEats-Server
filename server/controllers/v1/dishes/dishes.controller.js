@@ -229,6 +229,11 @@ function findRestaurantData(restaurantArray, cusineArray) {
  *        schema:
  *          type: string
  *        description: user's cuisine preferences
+ *      - in: query
+ *        name: cuisineArray
+ *        schema:
+ *          type: string
+ *        description: user's cuisine preferences
  *     tags:
  *       - Dishes
  *     produces:
