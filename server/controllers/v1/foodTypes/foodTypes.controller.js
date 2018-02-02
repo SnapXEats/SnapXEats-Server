@@ -26,6 +26,17 @@ const co = require('co');
 
 /**
  * @swagger
+ * definition:
+ *   foodTypeList:
+ *     type: object
+ *     properties:
+ *       foodTypeList:
+ *         type: array
+ *         items:
+ *           $ref: "#/definitions/food_info"
+ */
+/**
+ * @swagger
  * /api/v1/foodTypes:
  *   get:
  *     summary: List all food types
@@ -44,9 +55,8 @@ const co = require('co');
  *       200:
  *         description: "successful operation"
  *         schema:
- *           type: array
- *           items:
- *             "$ref": "#/definitions/food_info"
+ *           type: object
+ *           "$ref": "#/definitions/foodTypeList"
  */
 exports.getFoodTypesList = function (req, res) {
   return co(function* () {
