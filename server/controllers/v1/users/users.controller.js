@@ -289,6 +289,17 @@ exports.saveUserAddresses = function (req, res) {
 
 /**
  * @swagger
+ * definition:
+ *   userAddresses:
+ *     type: object
+ *     properties:
+ *       userAddresses:
+ *         type: array
+ *         items:
+ *           $ref: "#/definitions/address"
+ */
+/**
+ * @swagger
  * /api/v1/users/address/{userId}:
  *   get:
  *     summary: List user's all addresses
@@ -312,9 +323,8 @@ exports.saveUserAddresses = function (req, res) {
  *       200:
  *         description: "successful operation"
  *         schema:
- *           type: array
- *           items:
- *             "$ref": "#/definitions/address"
+ *           type: object
+ *           "$ref": "#/definitions/userAddresses"
  */
 
 exports.getUserAddresses = function (req, res) {

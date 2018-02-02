@@ -209,6 +209,18 @@ function findRestaurantData(restaurantArray, cusineArray) {
 
 /**
  * @swagger
+ * definition:
+ *   dishesInfo:
+ *     type: object
+ *     properties:
+ *       dishesInfo:
+ *         type: array
+ *         items:
+ *           $ref: "#/definitions/restaurantInfo"
+ */
+
+/**
+ * @swagger
  * /api/v1/Dishes:
  *   get:
  *     summary: List all dishes on base of user preferences
@@ -242,21 +254,16 @@ function findRestaurantData(restaurantArray, cusineArray) {
  *       200:
  *         description: "successful operation"
  *         schema:
- *           type: array
- *           items:
- *             "$ref": "#/definitions/restaurantInfo"
+ *           type: object
+ *           "$ref": "#/definitions/dishesInfo"
  */
 exports.getDIshes = function (req, res) {
   return co(function* () {
     const distance = 1610;
     const googleIds = [];
-    let cuisineArray = [];
-    if (type(req.query.cuisineArray, String)) {
-      cuisineArray.push(req.query.cuisineArray);
-    } else {
-      cuisineArray = req.query.cuisineArray;
-    }
-
+    let cuisineArray = req.query.cuisineArray;
+		cuisineArray = cuisineArray.replace(/'/g, '"');
+		cuisineArray = JSON.parse(cuisineArray);
     let data = yield getRestaurant(req.query.latitude, req.query.longitude, distance, googleIds);
     if (data.pgtoken) {
       data = yield getRestaurant(req.query.latitude, req.query.longitude,

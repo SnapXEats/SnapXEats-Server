@@ -26,6 +26,18 @@ const co = require('co');
 
 /**
  * @swagger
+ * definition:
+ *   cuisineList:
+ *     type: object
+ *     properties:
+ *       cuisineList:
+ *         type: array
+ *         items:
+ *           $ref: "#/definitions/cuisine_info"
+ */
+
+/**
+ * @swagger
  * /api/v1/cuisine:
  *   get:
  *     summary: List all cuisines
@@ -38,9 +50,8 @@ const co = require('co');
  *       200:
  *         description: "successful operation"
  *         schema:
- *           type: array
- *           items:
- *             "$ref": "#/definitions/cuisine_info"
+ *           type: object
+ *           "$ref": "#/definitions/cuisineList"
  */
 exports.getCuisineList = function (req, res) {
   return co(function* () {
