@@ -261,9 +261,13 @@ exports.getDIshes = function (req, res) {
   return co(function* () {
     const distance = 1610;
     const googleIds = [];
-    let cuisineArray = req.query.cuisineArray;
-		cuisineArray = cuisineArray.replace(/'/g, '"');
-		cuisineArray = JSON.parse(cuisineArray);
+    let cuisineArray = [];
+    if (type(req.query.cuisineArray, String)) {
+      cuisineArray.push(req.query.cuisineArray);
+    } else {
+      cuisineArray = req.query.cuisineArray;
+    }
+
     let data = yield getRestaurant(req.query.latitude, req.query.longitude, distance, googleIds);
     if (data.pgtoken) {
       data = yield getRestaurant(req.query.latitude, req.query.longitude,
