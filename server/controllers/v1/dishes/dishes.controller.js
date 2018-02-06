@@ -82,7 +82,7 @@ function getRestaurant(latitude, longitude, distance, googleIds, pagetoken) {
     let pgtoken;
     let result;
     if (pagetoken) {
-      sleep(1000);
+      sleep(1200);
       adr = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${distance}&type=restaurant&key=${key}&pagetoken=${pagetoken}`;
       result = yield getPlacesResult(adr, googleIds);
     } else {
