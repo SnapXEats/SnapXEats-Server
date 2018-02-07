@@ -20,6 +20,10 @@ db.restaurantInfo.hasOne(db.restaurantCuisine, {
 	foreignKey: 'restaurant_info_id'
 });
 
+db.userCuisinePreferences.belongsTo(db.cuisineInfo, {
+	foreignKey: 'cuisine_info_id'
+});
+
 /**
  * Get near by places result
  *
@@ -125,7 +129,6 @@ function findRestaurantData(restaurantArray) {
 			}
 		}
 		if(restaurantCount === restaurantArray.length) {
-		  console.log(restaurantCount);
 			return Promise.resolve(responseArray);
 		}
 	}).catch((err) => {
@@ -159,7 +162,6 @@ function findCuisineInfo(cuisineUniqueArray) {
 			}
 		}
 		if(cuisineCount === cuisineUniqueArray.length) {
-			console.log(cuisineCount);
 			return Promise.resolve(responseArray);
 		}
 	}).catch((err) => {
@@ -194,6 +196,10 @@ function findCuisineInfo(cuisineUniqueArray) {
  *         type: array
  *         items:
  *           $ref: "#/definitions/cuisine_info"
+ *       userPreSelectedCuisines:
+ *         type: array
+ *         items:
+ *           $ref: '#/definitions/cuisine_info'
  */
 
 /**
@@ -205,6 +211,10 @@ function findCuisineInfo(cuisineUniqueArray) {
  *     tags:
  *       - Cuisines
  *     parameters:
+ *      - in: header
+ *        name: Authorization
+ *        description: an authorization header (Bearer eyJhbGciOiJI...)
+ *        type: string
  *      - in: query
  *        name: latitude
  *        schema:
@@ -228,6 +238,7 @@ exports.getCuisineList = function (req, res) {
   return co(function* () {
 		const distance = 1610;
 		const googleIds = [];
+		let userPreSelectedCuisines;
 		let data = yield getRestaurant(req.query.latitude, req.query.longitude, distance, googleIds);
 		if (data.pgtoken) {
 			data = yield getRestaurant(req.query.latitude, req.query.longitude,
@@ -239,10 +250,35 @@ exports.getCuisineList = function (req, res) {
 		});
 		
 		const cuisineList = yield findCuisineInfo(cuisineUniqueArray);
-    return ({ cuisineList });
-  }).then((cuisineList) => {
+		if(!req.decodedData) {
+			userPreSelectedCuisines = [];
+		} else {
+			let userId = req.decodedData.user_id;
+			userPreSelectedCuisines = [];
+			let userCuisines = yield db.userCuisinePreferences.findAll({
+				where : {
+					user_id : userId
+				},
+				attributes : ['cuisine_info_id'],
+				include : [{
+					model : db.cuisineInfo,
+					attributes : ['cuisine_info_id', 'cuisine_name', 'cuisine_image_url']
+				}]
+			});
+			userCuisines.forEach((cusine) => {
+				userPreSelectedCuisines.push({
+					cuisine_info_id : cusine.cuisineInfo.cuisine_info_id,
+					cuisine_name : cusine.cuisineInfo.cuisine_name,
+					cuisine_image_url : cusine.cuisineInfo.cuisine_image_url
+				});
+			});
+		}
+    return ({ cuisineList,
+			userPreSelectedCuisines
+    });
+  }).then((response) => {
     res.status(200)
-      .json(cuisineList);
+      .json(response);
   }).catch((err) => {
     res.status(400).json({
       message: err.message
