@@ -71,7 +71,81 @@ function getRestaurantDetails(restaurantInfoId) {
 		});
 	});
 }
+/**
+ * @swagger
+ * definition:
+ *   restaurant_timing:
+ *     type: object
+ *     properties:
+ *       restaurant_open_close_time:
+ *         type: string
+ *       day_of_week:
+ *         type: string
+ */
 
+/**
+ * @swagger
+ * definition:
+ *   restaurant_dishes:
+ *     type: object
+ *     properties:
+ *       dish_image_url:
+ *         type: string
+ */
+
+/**
+ * @swagger
+ * definition:
+ *   restaurantDetails:
+ *     type: object
+ *     properties:
+ *       restaurant_info_id:
+ *         type: string
+ *       restaurant_name:
+ *         type: string
+ *       location_lat:
+ *         type: string
+ *       location_long:
+ *         type: string
+ *       restaurant_contact_no:
+ *         type: string
+ *       restaurant_address:
+ *         type: string
+ *       isOpenNow:
+ *         type: boolean
+ *       restaurant_timings:
+ *         type: array
+ *         items:
+ *           $ref: '#/definitions/restaurant_timing'
+ *       restaurant_speciality:
+ *          type: array
+ *          items:
+ *            $ref: '#/definitions/restaurant_dishes'
+ */
+
+/**
+ * @swagger
+ * /api/v1/restaurant:
+ *   get:
+ *     summary: Get information of restaurant
+ *     description: Get information of restaurant as an JSON Object
+ *     tags:
+ *       - Restaurant
+ *     parameters:
+ *      - in: query
+ *        name: restaurantInfoId
+ *        schema:
+ *          type: string
+ *        description: restaurant's unique ID
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: "successful operation"
+ *         schema:
+ *           type: object
+ *           "$ref": "#/definitions/restaurantDetails"
+ */
 exports.getRestaurantInforamtion = function (req, res) {
 	return co(function* () {
 		const restaurantInfoId = req.params.restaurantInfoId;
