@@ -62,7 +62,16 @@ function getRestaurantDetails(restaurantInfoId) {
 				attributes: ['restaurant_open_close_time', 'day_of_week']
 			}, {
 				model: db.restaurantDish,
-				attributes: ['dish_image_url']
+				attributes: ['dish_image_url'],
+				include : [{
+					attributes : ['dish_label'],
+					model : db.restaurantDishLabel,
+					where : {
+            dish_label: {
+              $ne: 'place'
+            }
+					}
+				}]
 			}]
 		}).then((restaurantInfo) => {
 			resolve(restaurantInfo);
@@ -70,6 +79,36 @@ function getRestaurantDetails(restaurantInfoId) {
 			reject(err);
 		});
 	});
+}
+
+/**
+ * Find Restaurant pics from DB
+ *
+ * @param {String} restaurantInfoId - unique id of restaurant
+ *
+ * @returns {Object} restaurant Pics
+ *
+ */
+function findRestaurantPics(restaurantInfoId) {
+  return new Promise((resolve, reject) => {
+    db.restaurantDish.findAll({
+			where : {
+        restaurant_info_id : restaurantInfoId
+			},
+      attributes: ['dish_image_url'],
+      order : [
+        [db.restaurantDishLabel,'dish_label', 'ASC']
+      ],
+        include : [{
+          attributes : ['dish_label'],
+          model : db.restaurantDishLabel
+        }]
+    }).then((restaurantPics) => {
+      resolve(restaurantPics);
+    }).catch((err) => {
+      reject(err);
+    });
+  });
 }
 /**
  * @swagger
@@ -121,18 +160,22 @@ function getRestaurantDetails(restaurantInfoId) {
  *          type: array
  *          items:
  *            $ref: '#/definitions/restaurant_dishes'
+ *       restaurant_pics:
+ *          type: array
+ *          items:
+ *            $ref: '#/definitions/restaurant_dishes'
  */
 
 /**
  * @swagger
- * /api/v1/restaurant:
+ * /api/v1/restaurant/{restaurantInfoId}:
  *   get:
  *     summary: Get information of restaurant
  *     description: Get information of restaurant as an JSON Object
  *     tags:
  *       - Restaurant
  *     parameters:
- *      - in: query
+ *      - in: path
  *        name: restaurantInfoId
  *        schema:
  *          type: string
@@ -151,6 +194,22 @@ exports.getRestaurantInforamtion = function (req, res) {
 		const restaurantInfoId = req.params.restaurantInfoId;
 		let restaurantDetails = {};
 		let restaurantInformation = yield getRestaurantDetails(restaurantInfoId);
+		let foodImageCount, picCount;
+		let restaurant_speciality = [], restaurant_pics = [];
+		for(foodImageCount = 0 ; foodImageCount < restaurantInformation.restaurantDishes.length;
+		foodImageCount++){
+      restaurant_speciality.push({
+        dish_image_url : restaurantInformation.restaurantDishes[foodImageCount].dish_image_url
+      });
+		}
+
+		let restaurantAllPics = yield findRestaurantPics(restaurantInfoId);
+
+    for(picCount = 0 ; picCount < restaurantAllPics.length; picCount++){
+      restaurant_pics.push({
+        dish_image_url : restaurantAllPics[picCount].dish_image_url
+      });
+    }
 
 		let address_url = 'https://maps.googleapis.com/maps/api/place/details/json?placeid=' +
 			restaurantInformation.restaurant_place_id + '&key=' + key;
@@ -162,7 +221,8 @@ exports.getRestaurantInforamtion = function (req, res) {
 		restaurantDetails.restaurant_contact_no = restaurantInformation.restaurant_contact_no;
 		restaurantDetails.restaurant_address = restaurantInformation.restaurant_address;
 		restaurantDetails.restaurant_timings = restaurantInformation.restaurantTimings;
-		restaurantDetails.restaurant_speciality = restaurantInformation.restaurantDishes;
+		restaurantDetails.restaurant_speciality = restaurant_speciality;
+		restaurantDetails.restaurant_pics = restaurant_pics;
 
 		let isHotelOpen = yield getPlaceInformation(address_url);
 		if (isHotelOpen) {
