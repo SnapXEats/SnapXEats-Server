@@ -11,4 +11,6 @@ module.exports = function (app) {
   app.use('/api/v1/users', req('./controllers/v1/users'));
 	app.use('/api/v1/foodTypes', req('./controllers/v1/foodTypes'));
 	app.use('/api/v1/userPreferences', req('./controllers/v1/userPreferences'));
+	app.use('/api/v1/restaurant', req('./controllers/v1/restaurant'));
+  app.use('/api/v1/userGesture', req('./controllers/v1/userGesture'));
 };
