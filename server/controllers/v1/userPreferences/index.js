@@ -5,5 +5,6 @@ const router = require('express').Router();
 const auth = require('./../../../../lib/auth');
 
 router.post('/', auth.isAuthenticated(), controller.setUserPreferences);
+router.get('/', auth.isAuthenticated(), controller.getUserPreferences);
 
 module.exports = router;

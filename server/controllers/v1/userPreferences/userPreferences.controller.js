@@ -8,6 +8,13 @@ const co = require('co');
 
 const _ = require('underscore');
 
+db.userCuisinePreferences.belongsTo(db.cuisineInfo, {
+  foreignKey: 'cuisine_info_id'
+});
+
+db.userFoodPreferences.belongsTo(db.foodTypeInfo, {
+  foreignKey: 'food_type_info_id'
+});
 /**
  * Insert user preferences
  *
@@ -186,4 +193,109 @@ exports.setUserPreferences = function (req, res) {
 			message: err.message
 		});
 	});
+};
+
+/**
+ * Get User Preferences from database
+ *
+ * @param {String} userId - unique id of user
+ *
+ * @returns {Object} User preferences - user food,cuisine and restaurant preferences
+ */
+
+function getUserPreferncesFromDB(userId) {
+  return co(function* () {
+    let resolvedPromises = yield Promise.all([
+    	db.userPreferences.find({
+				where : {
+          user_id : userId
+				},
+        attributes : ['user_preferences_id', 'restaurant_rating', 'restaurant_price',
+				'restaurant_distance', 'sort_by_distance', 'sort_by_rating']
+      }),
+			db.userCuisinePreferences.findAll({
+        where : {
+          user_id : userId
+        },
+        attributes:['user_cuisine_preferences_id', 'is_cuisine_like', 'is_cuisine_favourite'],
+        include : [{
+          model : db.cuisineInfo,
+          attributes : ['cuisine_info_id', 'cuisine_name', 'cuisine_image_url']
+        }]
+			}),
+      db.userFoodPreferences.findAll({
+        where : {
+          user_id : userId
+        },
+				attributes:['user_food_preferences_id', 'is_food_like', 'is_food_favourite'],
+				include : [{
+        	model : db.foodTypeInfo,
+					attributes : ['food_type_info_id', 'food_name', 'food_image_url']
+				}]
+      })
+    	]);
+    return({
+      userPreferences : resolvedPromises[0],
+      userCuisinePreferences : resolvedPromises[1],
+      userFoodPreferences : resolvedPromises[2]
+		})
+  });
+};
+
+
+exports.getUserPreferences = function (req, res) {
+  return co(function* () {
+    const userId = req.decodedData.user_id;
+    let userAllPreferences = yield getUserPreferncesFromDB(userId);
+    let userPreferences = {
+      user_preferences_id : userAllPreferences.userPreferences.user_preferences_id,
+      restaurant_rating : userAllPreferences.userPreferences.restaurant_rating,
+      restaurant_price : userAllPreferences.userPreferences.restaurant_price,
+      restaurant_distance : userAllPreferences.userPreferences.restaurant_distance,
+      sort_by_distance : userAllPreferences.userPreferences.sort_by_distance,
+      sort_by_rating : userAllPreferences.userPreferences.sort_by_rating,
+      userCuisinePreferences : [],
+      userFoodPreferences : []
+		};
+
+    let cuisineCount, foodCount;
+    for(cuisineCount = 0; cuisineCount < userAllPreferences.userCuisinePreferences.length;
+		cuisineCount++){
+    	let cuisineInfo =  userAllPreferences.userCuisinePreferences[cuisineCount];
+      userPreferences.userCuisinePreferences.push({
+        user_cuisine_preferences_id : cuisineInfo.user_cuisine_preferences_id,
+        cuisine_info_id : cuisineInfo.cuisineInfo.cuisine_info_id,
+        cuisine_name : cuisineInfo.cuisineInfo.cuisine_name,
+        cuisine_image_url : cuisineInfo.cuisineInfo.cuisine_image_url,
+        is_cuisine_like : cuisineInfo.is_cuisine_like,
+        is_cuisine_favourite : cuisineInfo.is_cuisine_favourite
+
+			});
+		}
+
+    for(foodCount = 0; foodCount < userAllPreferences.userFoodPreferences.length;
+        foodCount++){
+      let foodTypeInfo =  userAllPreferences.userFoodPreferences[foodCount];
+      userPreferences.userFoodPreferences.push({
+        user_food_preferences_id : foodTypeInfo.user_food_preferences_id,
+        food_type_info_id : foodTypeInfo.foodTypeInfo.food_type_info_id,
+        food_name : foodTypeInfo.foodTypeInfo.food_name,
+        food_image_url : foodTypeInfo.foodTypeInfo.food_image_url,
+        is_food_like : foodTypeInfo.is_food_like,
+        is_food_favourite : foodTypeInfo.is_food_favourite
+
+      });
+    }
+
+    return ({
+      userPreferences
+    });
+  }).then((userPreferences) => {
+    res.status(200)
+      .json(userPreferences);
+  }).catch((err) => {
+    res.status(400).json({
+      message: err.message
+    });
+  });
 };
