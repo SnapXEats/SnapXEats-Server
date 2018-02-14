@@ -242,6 +242,97 @@ function getUserPreferncesFromDB(userId) {
   });
 };
 
+/**
+ * @swagger
+ * definition:
+ *   userSelectedFoodPreferences:
+ *     type: object
+ *     properties:
+ *       user_food_preferences_id:
+ *         type: string
+ *       food_type_info_id:
+ *         type: string
+ *       food_name:
+ *         type: string
+ *       food_image_url:
+ *         type: string
+ *       is_food_like:
+ *         type: boolean
+ *       is_food_favourite:
+ *         type: boolean
+ */
+
+/**
+ * @swagger
+ * definition:
+ *   userSelectedCuisinePreferences:
+ *     type: object
+ *     properties:
+ *       user_cuisine_preferences_id:
+ *         type: string
+ *       cuisine_info_id:
+ *         type: string
+ *       cuisine_name:
+ *         type: string
+ *       cuisine_image_url:
+ *         type: string
+ *       is_cuisine_like:
+ *         type: boolean
+ *       is_cuisine_favourite:
+ *         type: boolean
+ */
+
+/**
+ * @swagger
+ * definition:
+ *   userSetPreferences:
+ *     type: object
+ *     properties:
+ *       user_preferences_id:
+ *         type: string
+ *       restaurant_rating:
+ *         type: number
+ *       restaurant_price:
+ *         type: number
+ *       restaurant_distance:
+ *         type: number
+ *       sort_by_distance:
+ *         type: boolean
+ *       sort_by_rating:
+ *         type: boolean
+ *       userCuisinePreferences:
+ *         type: array
+ *         items:
+ *           $ref: "#/definitions/userSelectedCuisinePreferences"
+ *       userFoodPreferences:
+ *         type: array
+ *         items:
+ *           $ref: "#/definitions/userSelectedFoodPreferences"
+ */
+
+/**
+ * @swagger
+ * /api/v1/userPreferences:
+ *   get:
+ *     summary: Get user all preferences
+ *     description: get user all preferences as an JSON object
+ *     tags:
+ *       - User Preference
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         description: an authorization header (Bearer eyJhbGciOiJI...)
+ *         required: true
+ *         type: string
+ *     responses:
+ *       200:
+ *         description: "successful operation"
+ *         schema:
+ *           type: object
+ *           "$ref": "#/definitions/userSetPreferences"
+ */
 
 exports.getUserPreferences = function (req, res) {
   return co(function* () {
