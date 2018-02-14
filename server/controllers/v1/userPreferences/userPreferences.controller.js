@@ -390,3 +390,81 @@ exports.getUserPreferences = function (req, res) {
     });
   });
 };
+
+/**
+ * Update user preferences
+ *
+ * @param {Object} userPreferences - preferences of user
+ *
+ * @returns {Object} result - updated result of user preferences
+ */
+function updateUserPrefernces(userPreferences) {
+  return co(function* () {
+    const userPreferences = yield db.userPreferences.find({
+			where : {
+        user_preferences_id : userPreferences.user_preferences_id
+			},
+			attributes : ['user_preferences_id', 'restaurant_rating', 'restaurant_price',
+			'restaurant_distance', 'sort_by_distance', 'sort_by_rating']
+		});
+
+    const result = yield userPreferences.updateAttributes(userPreferences);
+    return Promise.resolve({
+      result
+    });
+  }).catch((err) => {
+    return err;
+  });
+}
+
+function filterCuisinePreferences(userCuisinePreferences) {
+  return new Promise((resolve, reject)=>{
+  	let cuisineCount, deleteCuisinePreference = [], addCuisinePreference = [];
+  	for(cuisineCount = 0; cuisineCount < userCuisinePreferences.length; cuisineCount++){
+  		let cuisine = userCuisinePreferences[cuisineCount];
+  		if(cuisine.hasOwnProperty('user_cuisine_preferences_id')){
+        deleteCuisinePreference.push(cuisine);
+			} else if(cuisine.hasOwnProperty('cuisine_info_id') && (cuisine.hasOwnProperty('is_cuisine_favourite')
+				|| cuisine.hasOwnProperty('is_cuisine_like'))){
+        addCuisinePreference.push(cuisine);
+			}
+		}
+
+		if(cuisineCount === userCuisinePreferences.length){
+  		resolve
+		}
+	})
+
+  }
+
+exports.editUserPreferences = function (req, res) {
+  return co(function* () {
+    const userCuisinePreferences = req.body.user_cuisine_preferences;
+    const userFoodPreferences = req.body.user_food_preferences;
+    const userPreferences = _.pick(req.body,'user_preferences_id', 'restaurant_rating', 'restaurant_price',
+      'restaurant_distance', 'sort_by_distance', 'sort_by_rating');
+    if (userPreferences.hasOwnProperty('restaurant_rating') ||
+      userPreferences.hasOwnProperty('restaurant_price') ||
+      userPreferences.hasOwnProperty('restaurant_distance') ||
+      userPreferences.hasOwnProperty('sort_by_distance') ||
+      userPreferences.hasOwnProperty('sort_by_rating')) {
+      yield updateUserPrefernces(userPreferences);
+    }
+    if (userCuisinePreferences && userCuisinePreferences.length > 0) {
+      yield filterCuisinePreferences(userCuisinePreferences);
+    }
+    if (userFoodPreferences && userFoodPreferences.length > 0) {
+      yield insertFoodTypePreferences(userFoodPreferences, userId);
+    }
+    return ({
+      message: 'all preferences inserted succesfully'
+    });
+  }).then((userPreferencesMessage) => {
+    res.status(200)
+      .json(userPreferencesMessage);
+  }).catch((err) => {
+    res.status(400).json({
+      message: err.message
+    });
+  });
+};
