@@ -398,17 +398,16 @@ exports.getUserPreferences = function (req, res) {
  *
  * @returns {Object} result - updated result of user preferences
  */
-function updateUserPrefernces(userPreferences) {
+function updateUserPreferences(userPreferences) {
   return co(function* () {
-    const userPreferences = yield db.userPreferences.find({
+    const findUserPreferences = yield db.userPreferences.find({
 			where : {
         user_preferences_id : userPreferences.user_preferences_id
 			},
 			attributes : ['user_preferences_id', 'restaurant_rating', 'restaurant_price',
 			'restaurant_distance', 'sort_by_distance', 'sort_by_rating']
 		});
-
-    const result = yield userPreferences.updateAttributes(userPreferences);
+    const result = yield findUserPreferences.updateAttributes(userPreferences);
     return Promise.resolve({
       result
     });
@@ -429,16 +428,108 @@ function filterCuisinePreferences(userCuisinePreferences) {
         addCuisinePreference.push(cuisine);
 			}
 		}
-
 		if(cuisineCount === userCuisinePreferences.length){
-  		resolve
+  		resolve({
+        addCuisinePreference,
+        deleteCuisinePreference
+      });
 		}
 	})
+}
 
-  }
+function filterFoodPreferences(userFoodPreferences) {
+  return new Promise((resolve, reject)=>{
+    let foodCount, deleteFoodPreference = [], addFoodPreference = [];
+    for(foodCount = 0; foodCount < userFoodPreferences.length; foodCount++){
+      let foodType = userFoodPreferences[foodCount];
+      if(foodType.hasOwnProperty('user_food_preferences_id')){
+        deleteFoodPreference.push(foodType);
+      } else if(foodType.hasOwnProperty('food_type_info_id') &&
+        (foodType.hasOwnProperty('is_food_favourite') || foodType.hasOwnProperty('is_food_like'))){
+        addFoodPreference.push(foodType);
+      }
+    }
+    if(foodCount === userFoodPreferences.length){
+      resolve({
+        addFoodPreference,
+        deleteFoodPreference
+      });
+    }
+  })
+}
 
+function deleteUserCuisineData(deleteCuisinePreference) {
+  return co(function* () {
+    let cuisineCount;
+    for(cuisineCount = 0; cuisineCount < deleteCuisinePreference.length; cuisineCount++){
+      const deletedUserCuisinePreferences = yield db.userCuisinePreferences.destroy({
+        where : {
+          user_cuisine_preferences_id : deleteCuisinePreference[cuisineCount].user_cuisine_preferences_id
+        }
+      });
+    }
+    if(cuisineCount === deleteCuisinePreference.length){
+      return Promise.resolve({"msg" : "All cuisine deleted successfully"} );
+    }
+  }).catch((err) => {
+    return err;
+  });
+}
+
+
+function deleteUserFoodData(deleteFoodPreference) {
+  return co(function* () {
+    let foodCount;
+    for(foodCount = 0; foodCount < deleteFoodPreference.length; foodCount++){
+      const deletedUserFoodPreferences = yield db.userFoodPreferences.destroy({
+        where : {
+          user_food_preferences_id : deleteFoodPreference[foodCount].user_food_preferences_id
+        }
+      });
+    }
+    if(foodCount === deleteFoodPreference.length){
+      return Promise.resolve({"msg" : "All food type deleted successfully"} );
+    }
+  }).catch((err) => {
+    return err;
+  });
+}
+
+
+function addUserFoodData(addFoodPreference, userId) {
+  return co(function* () {
+    let foodCount;
+    for(foodCount = 0; foodCount < addFoodPreference.length; foodCount++){
+      let foodType = addFoodPreference[foodCount];
+      foodType.user_id = userId;
+      const addedUserFoodPreferences = yield db.userFoodPreferences.create(foodType);
+    }
+    if(foodCount === addFoodPreference.length){
+      return Promise.resolve({"msg" : "All food type added successfully"} );
+    }
+  }).catch((err) => {
+    return err;
+  });
+}
+
+function addUserCuisineData(addCuisinePreference, userId) {
+  return co(function* () {
+    let cuisineCount;
+    for(cuisineCount = 0; cuisineCount < addCuisinePreference.length; cuisineCount++){
+      let cuisineType = addCuisinePreference[cuisineCount];
+      cuisineType.user_id = userId;
+      const addedUserCuisinePreferences = yield db.userCuisinePreferences.create(cuisineType);
+    }
+    if(cuisineCount === addCuisinePreference.length){
+      return Promise.resolve({"msg" : "All cuisine type added successfully"} );
+    }
+  }).catch((err) => {
+    return err;
+  });
+}
 exports.editUserPreferences = function (req, res) {
   return co(function* () {
+    const userId = req.decodedData.user_id;
     const userCuisinePreferences = req.body.user_cuisine_preferences;
     const userFoodPreferences = req.body.user_food_preferences;
     const userPreferences = _.pick(req.body,'user_preferences_id', 'restaurant_rating', 'restaurant_price',
@@ -448,16 +539,20 @@ exports.editUserPreferences = function (req, res) {
       userPreferences.hasOwnProperty('restaurant_distance') ||
       userPreferences.hasOwnProperty('sort_by_distance') ||
       userPreferences.hasOwnProperty('sort_by_rating')) {
-      yield updateUserPrefernces(userPreferences);
+      yield updateUserPreferences(userPreferences);
     }
     if (userCuisinePreferences && userCuisinePreferences.length > 0) {
-      yield filterCuisinePreferences(userCuisinePreferences);
+     let filteredCuisineData = yield filterCuisinePreferences(userCuisinePreferences);
+     yield addUserCuisineData(filteredCuisineData.addCuisinePreference, userId);
+     yield deleteUserCuisineData(filteredCuisineData.deleteCuisinePreference);
     }
     if (userFoodPreferences && userFoodPreferences.length > 0) {
-      yield insertFoodTypePreferences(userFoodPreferences, userId);
+      let filteredFoodData = yield filterFoodPreferences(userFoodPreferences);
+      yield addUserFoodData(filteredFoodData.addFoodPreference, userId);
+      yield deleteUserFoodData(filteredFoodData.deleteFoodPreference);
     }
     return ({
-      message: 'all preferences inserted succesfully'
+      message: 'all preferences updated succesfully'
     });
   }).then((userPreferencesMessage) => {
     res.status(200)
