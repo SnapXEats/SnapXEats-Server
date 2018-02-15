@@ -16,6 +16,8 @@ const sleep = require('system-sleep');
 
 const _ = require('underscore');
 
+const __ = require('lodash');
+
 db.restaurantInfo.hasOne(db.restaurantCuisine, {
 	foreignKey: 'restaurant_info_id'
 });
@@ -40,11 +42,11 @@ function getPlacesResult(adress, googleIds) {
 				const results = JSON.parse(result);
 				const pgtoken = results.next_page_token;
 				let placeCount = 0;
-				
+
 				for (placeCount; placeCount < results.results.length; placeCount++) {
 					googleIds.push(results.results[placeCount].id);
 				}
-				
+
 				if (placeCount === results.results.length) {
 					if (pgtoken) {
 						resolve({
@@ -168,6 +170,59 @@ function findCuisineInfo(cuisineUniqueArray) {
 		return err;
 	});
 }
+
+/**
+ * filterCuisineInfo (Filter cuisine information and added user cuisine preferences)
+ *
+ * @param {String} userId - Unique Id of user
+ * @param {Array} cuisineList - Array of cuisineInfo
+ *
+ * @returns {Array} cuisineList
+ *
+ */
+function filterCuisineInfo(userId, cuisineList) {
+  return co(function* () {
+    let cuisineCount;
+    if(!cuisineList){
+      cuisineList = yield db.cuisineInfo.findAll({
+        attributes : ['cuisine_info_id', 'cuisine_name', 'cuisine_image_url']
+      });
+		}
+
+    let userCuisines = yield db.userCuisinePreferences.findAll({
+      where : {
+        user_id : userId
+      },
+      attributes : ['user_cuisine_preferences_id','is_cuisine_like','is_cuisine_favourite'],
+      include : [{
+        model : db.cuisineInfo,
+        attributes : ['cuisine_info_id', 'cuisine_name', 'cuisine_image_url']
+      }]
+    });
+
+    for(cuisineCount = 0; cuisineCount < userCuisines.length; cuisineCount++){
+      let userCuisineObject = userCuisines[cuisineCount];
+      let object = {
+        cuisine_info_id : userCuisineObject.cuisineInfo.cuisine_info_id,
+        cuisine_name : userCuisineObject.cuisineInfo.cuisine_name,
+        cuisine_image_url : userCuisineObject.cuisineInfo.cuisine_image_url,
+        is_cuisine_like : userCuisineObject.is_cuisine_like,
+        is_cuisine_favourite : userCuisineObject.is_cuisine_favourite,
+        user_cuisine_preferences_id : userCuisineObject.user_cuisine_preferences_id
+      };
+      let index = _.findIndex(cuisineList, { cuisine_info_id: object.cuisine_info_id });
+      cuisineList.splice(index, 1, object);
+    }
+    if(cuisineCount === userCuisines.length) {
+      return Promise.resolve({
+        cuisineList
+      });
+    }
+  }).catch((err) => {
+    return err;
+  });
+}
+
 /**
  * @swagger
  * definition:
@@ -184,6 +239,12 @@ function findCuisineInfo(cuisineUniqueArray) {
  *         type: string
  *       cuisine_image_url:
  *         type: string
+ *       is_cuisine_like:
+ *         type: string
+ *       is_cuisine_favourite:
+ *         type: string
+ *       user_cuisine_preferences_id:
+ *         type: string
  */
 
 /**
@@ -196,10 +257,6 @@ function findCuisineInfo(cuisineUniqueArray) {
  *         type: array
  *         items:
  *           $ref: "#/definitions/cuisine_info"
- *       userPreSelectedCuisines:
- *         type: array
- *         items:
- *           $ref: '#/definitions/cuisine_info'
  */
 
 /**
@@ -238,44 +295,45 @@ exports.getCuisineList = function (req, res) {
   return co(function* () {
 		const distance = 1610;
 		const googleIds = [];
-		let userPreSelectedCuisines;
-		let data = yield getRestaurant(req.query.latitude, req.query.longitude, distance, googleIds);
-		if (data.pgtoken) {
-			data = yield getRestaurant(req.query.latitude, req.query.longitude,
-				distance, data.googleIds, data.pgtoken);
-		}
-		const cuisineArrayResult = yield findRestaurantData(data.googleIds);
-		const cuisineUniqueArray = _.uniq(cuisineArrayResult, function(cuisine){
-			return cuisine.cuisine_info_id;
-		});
-		
-		const cuisineList = yield findCuisineInfo(cuisineUniqueArray);
-		if(!req.decodedData) {
-			userPreSelectedCuisines = [];
+		if(req.query.latitude && req.query.latitude){
+      let data = yield getRestaurant(req.query.latitude, req.query.longitude, distance, googleIds);
+      if (data.pgtoken) {
+        data = yield getRestaurant(req.query.latitude, req.query.longitude,
+          distance, data.googleIds, data.pgtoken);
+      }
+      const cuisineArrayResult = yield findRestaurantData(data.googleIds);
+      const cuisineUniqueArray = _.uniq(cuisineArrayResult, function(cuisine){
+        return cuisine.cuisine_info_id;
+      });
+
+      let cuisineList = yield findCuisineInfo(cuisineUniqueArray);
+      if(req.decodedData) {
+        let userId = req.decodedData.user_id;
+        cuisineList = yield filterCuisineInfo(userId, cuisineList);
+        return (
+          cuisineList
+        );
+      } else {
+        return ({
+          cuisineList
+			  });
+			}
+
+		} else if(req.decodedData) {
+      let userId = req.decodedData.user_id;
+      let cuisineList = yield filterCuisineInfo(userId);
+      return (
+        cuisineList
+      );
 		} else {
-			let userId = req.decodedData.user_id;
-			userPreSelectedCuisines = [];
-			let userCuisines = yield db.userCuisinePreferences.findAll({
-				where : {
-					user_id : userId
-				},
-				attributes : ['cuisine_info_id'],
-				include : [{
-					model : db.cuisineInfo,
-					attributes : ['cuisine_info_id', 'cuisine_name', 'cuisine_image_url']
-				}]
-			});
-			userCuisines.forEach((cusine) => {
-				userPreSelectedCuisines.push({
-					cuisine_info_id : cusine.cuisineInfo.cuisine_info_id,
-					cuisine_name : cusine.cuisineInfo.cuisine_name,
-					cuisine_image_url : cusine.cuisineInfo.cuisine_image_url
-				});
+      let cuisineList = yield db.cuisineInfo.findAll({
+        attributes : ['cuisine_info_id', 'cuisine_name', 'cuisine_image_url']
+      });
+      return ({
+				cuisineList
 			});
 		}
-    return ({ cuisineList,
-			userPreSelectedCuisines
-    });
+
   }).then((response) => {
     res.status(200)
       .json(response);
