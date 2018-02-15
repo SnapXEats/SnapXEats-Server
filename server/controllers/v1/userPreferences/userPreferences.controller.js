@@ -15,6 +15,7 @@ db.userCuisinePreferences.belongsTo(db.cuisineInfo, {
 db.userFoodPreferences.belongsTo(db.foodTypeInfo, {
   foreignKey: 'food_type_info_id'
 });
+
 /**
  * Insert user preferences
  *
@@ -527,13 +528,85 @@ function addUserCuisineData(addCuisinePreference, userId) {
     return err;
   });
 }
+
+/**
+ * @swagger
+ * paths:
+ *  /api/v1/userPreferences/{userPreferencesId}:
+ *    put:
+ *      summary: Edit user preferences.
+ *      description: Edit preferences of user as a JSON object
+ *      tags:
+ *        - User Preference
+ *      consumes:
+ *        - application/json
+ *      parameters:
+ *        - in: header
+ *          name: Authorization
+ *          description: an authorization header (Bearer eyJhbGciOiJI...)
+ *          required: true
+ *          type: string
+ *        - in: body
+ *          name: user preferences
+ *          description: update user preferences.
+ *          schema:
+ *            type: object
+ *            properties:
+ *              user_preferences_id:
+ *                type: string
+ *              restaurant_rating:
+ *                type: number
+ *              restaurant_price:
+ *                type: string
+ *              restaurant_distance:
+ *                type: number
+ *              sort_by_distance:
+ *                type: boolean
+ *              sort_by_rating:
+ *                type: boolean
+ *              user_cuisine_preferences:
+ *                type: array
+ *                items:
+ *                  - type : object
+ *                    properties:
+ *                      user_cuisine_preferences_id:
+ *                        type: string
+ *                  - type : object
+ *                    properties:
+ *                      cuisine_info_id:
+ *                        type: string
+ *                      is_cuisine_like:
+ *                        type: boolean
+ *                      is_cuisine_favourite:
+ *                        type: boolean
+ *              user_food_preferences:
+ *                type: array
+ *                items:
+ *                  - type : object
+ *                    properties:
+ *                      user_food_preferences_id:
+ *                        type: string
+ *                  - type : object
+ *                    properties:
+ *                      food_type_info_id:
+ *                        type: string
+ *                      is_food_like:
+ *                        type: boolean
+ *                      is_food_favourite:
+ *                        type: boolean
+ *      responses:
+ *        201:
+ *          description: Updated
+ */
 exports.editUserPreferences = function (req, res) {
   return co(function* () {
     const userId = req.decodedData.user_id;
+    const user_preferences_id = req.params.userPreferencesId;
     const userCuisinePreferences = req.body.user_cuisine_preferences;
     const userFoodPreferences = req.body.user_food_preferences;
-    const userPreferences = _.pick(req.body,'user_preferences_id', 'restaurant_rating', 'restaurant_price',
+    const userPreferences = _.pick(req.body,'restaurant_rating', 'restaurant_price',
       'restaurant_distance', 'sort_by_distance', 'sort_by_rating');
+    userPreferences.user_preferences_id = user_preferences_id;
     if (userPreferences.hasOwnProperty('restaurant_rating') ||
       userPreferences.hasOwnProperty('restaurant_price') ||
       userPreferences.hasOwnProperty('restaurant_distance') ||
