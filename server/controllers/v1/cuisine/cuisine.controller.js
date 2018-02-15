@@ -184,9 +184,21 @@ function filterCuisineInfo(userId, cuisineList) {
   return co(function* () {
     let cuisineCount;
     if(!cuisineList){
-      cuisineList = yield db.cuisineInfo.findAll({
+      let cuisineTypes = yield db.cuisineInfo.findAll({
         attributes : ['cuisine_info_id', 'cuisine_name', 'cuisine_image_url']
       });
+      cuisineList = [];
+      for(let cuisineCount = 0; cuisineCount < cuisineTypes.length; cuisineCount++){
+        let userCuisineObject = cuisineTypes[cuisineCount];
+        let cuisineObject = {
+          cuisine_info_id : userCuisineObject.cuisine_info_id,
+          cuisine_name : userCuisineObject.cuisine_name,
+          cuisine_image_url : userCuisineObject.cuisine_image_url,
+          is_cuisine_like : false,
+          is_cuisine_favourite : false
+        };
+        cuisineList.push(cuisineObject);
+      }
 		}
 
     let userCuisines = yield db.userCuisinePreferences.findAll({
@@ -240,9 +252,9 @@ function filterCuisineInfo(userId, cuisineList) {
  *       cuisine_image_url:
  *         type: string
  *       is_cuisine_like:
- *         type: string
+ *         type: boolean
  *       is_cuisine_favourite:
- *         type: string
+ *         type: boolean
  *       user_cuisine_preferences_id:
  *         type: string
  */
@@ -306,7 +318,19 @@ exports.getCuisineList = function (req, res) {
         return cuisine.cuisine_info_id;
       });
 
-      let cuisineList = yield findCuisineInfo(cuisineUniqueArray);
+      let cuisineTypes = yield findCuisineInfo(cuisineUniqueArray);
+      let cuisineList = [];
+      for(let cuisineCount = 0; cuisineCount < cuisineTypes.length; cuisineCount++){
+        let userCuisineObject = cuisineTypes[cuisineCount];
+        let cuisineObject = {
+          cuisine_info_id : userCuisineObject.cuisine_info_id,
+          cuisine_name : userCuisineObject.cuisine_name,
+          cuisine_image_url : userCuisineObject.cuisine_image_url,
+          is_cuisine_like : false,
+          is_cuisine_favourite : false
+        };
+        cuisineList.push(cuisineObject);
+      }
       if(req.decodedData) {
         let userId = req.decodedData.user_id;
         cuisineList = yield filterCuisineInfo(userId, cuisineList);
@@ -326,9 +350,21 @@ exports.getCuisineList = function (req, res) {
         cuisineList
       );
 		} else {
-      let cuisineList = yield db.cuisineInfo.findAll({
+      let cuisineTypes = yield db.cuisineInfo.findAll({
         attributes : ['cuisine_info_id', 'cuisine_name', 'cuisine_image_url']
       });
+      let cuisineList = [];
+      for(let cuisineCount = 0; cuisineCount < cuisineTypes.length; cuisineCount++){
+        let userCuisineObject = cuisineTypes[cuisineCount];
+        let cuisineObject = {
+          cuisine_info_id : userCuisineObject.cuisine_info_id,
+          cuisine_name : userCuisineObject.cuisine_name,
+          cuisine_image_url : userCuisineObject.cuisine_image_url,
+          is_cuisine_like : false,
+          is_cuisine_favourite : false
+        };
+        cuisineList.push(cuisineObject);
+      }
       return ({
 				cuisineList
 			});

@@ -54,9 +54,9 @@ function findUserPreferences(userId) {
  *       food_image_url:
  *         type: string
  *       is_food_like:
- *         type: string
+ *         type: boolean
  *       is_food_favourite:
- *         type: string
+ *         type: boolean
  *       user_food_preferences_id:
  *         type: string
  */
@@ -98,14 +98,38 @@ exports.getFoodTypesList = function (req, res) {
   return co(function* () {
     let foodTypeList;
     if(!req.decodedData) {
-      foodTypeList = yield db.foodTypeInfo.findAll({
+      foodTypeList = [];
+      let foodTypes = yield db.foodTypeInfo.findAll({
         attributes : ['food_type_info_id', 'food_name', 'food_image_url']
       });
+      for(let foodCount = 0; foodCount < foodTypes.length; foodCount++){
+        let userFoodObject = foodTypes[foodCount];
+        let foodObject = {
+          food_type_info_id : userFoodObject.food_type_info_id,
+          food_name : userFoodObject.food_name,
+          food_image_url : userFoodObject.food_image_url,
+          is_food_like : false,
+          is_food_favourite : false
+        };
+        foodTypeList.push(foodObject);
+      }
     } else {
       let userId = req.decodedData.user_id;
-      foodTypeList = yield db.foodTypeInfo.findAll({
+      foodTypeList = [];
+      let foodTypes = yield db.foodTypeInfo.findAll({
         attributes : ['food_type_info_id', 'food_name', 'food_image_url']
       });
+      for(let foodCount = 0; foodCount < foodTypes.length; foodCount++){
+        let userFoodObject = foodTypes[foodCount];
+        let foodObject = {
+          food_type_info_id : userFoodObject.food_type_info_id,
+          food_name : userFoodObject.food_name,
+          food_image_url : userFoodObject.food_image_url,
+          is_food_like : false,
+          is_food_favourite : false
+        };
+        foodTypeList.push(foodObject);
+      }
       let userFoodPreferences = yield findUserPreferences(userId);
       for(let foodCount = 0; foodCount < userFoodPreferences.length; foodCount++){
         let userFoodObject = userFoodPreferences[foodCount];
