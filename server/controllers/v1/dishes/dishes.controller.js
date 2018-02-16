@@ -147,6 +147,9 @@ function findRestaurantData(restaurantArray, cusineArray) {
         responseArray.push({
           restaurant_info_id : result.restaurant_info_id,
           restaurant_name : result.restaurant_name,
+          location_lat : result.location_lat,
+          location_long : result.location_long,
+          restaurant_price : result.restaurant_price,
           restaurantDishes : result.restaurantDishes
         });
       }

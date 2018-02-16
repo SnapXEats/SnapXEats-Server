@@ -53,7 +53,8 @@ function getRestaurantDetails(restaurantInfoId) {
 	return new Promise((resolve, reject) => {
 		db.restaurantInfo.find({
 			attributes: ['restaurant_info_id', 'restaurant_place_id', 'restaurant_name',
-				'location_lat', 'location_long', 'restaurant_address', 'restaurant_contact_no'],
+				'location_lat', 'location_long', 'restaurant_address',
+				'restaurant_price', 'restaurant_rating', 'restaurant_contact_no'],
 			where: {
 				restaurant_info_id: restaurantInfoId
 			},
@@ -220,6 +221,8 @@ exports.getRestaurantInforamtion = function (req, res) {
 		restaurantDetails.location_long = restaurantInformation.location_long;
 		restaurantDetails.restaurant_contact_no = restaurantInformation.restaurant_contact_no;
 		restaurantDetails.restaurant_address = restaurantInformation.restaurant_address;
+		restaurantDetails.restaurant_rating = restaurantInformation.restaurant_rating;
+		restaurantDetails.restaurant_price = restaurantInformation.restaurant_price;
 		restaurantDetails.restaurant_timings = restaurantInformation.restaurantTimings;
 		restaurantDetails.restaurant_speciality = restaurant_speciality;
 		restaurantDetails.restaurant_pics = restaurant_pics;
