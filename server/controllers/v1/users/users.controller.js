@@ -203,7 +203,8 @@ exports.signUp = function (req, res) {
     const token = yield issueToken(userInformation.user_id, userInformation.user_type);
     return ({
       token,
-      user_id : userInformation.user_id
+      user_id : userInformation.user_id,
+      social_platform : socialPlatform
     });
   }).then((createdUserData) => {
     res.status(200)
