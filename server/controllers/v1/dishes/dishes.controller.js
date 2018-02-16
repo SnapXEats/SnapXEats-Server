@@ -224,7 +224,7 @@ function findRestaurantData(restaurantArray, cusineArray) {
 
 /**
  * @swagger
- * /api/v1/Dishes:
+ * /api/v1/dishes:
  *   get:
  *     summary: List all dishes on base of user preferences
  *     description: List all dishes as an JSON array
