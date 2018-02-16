@@ -14,6 +14,9 @@ db.restaurantInfo.hasMany(db.restaurantTiming, {
 	foreignKey: 'restaurant_info_id'
 });
 
+db.restaurantInfo.hasMany(db.restaurantAminities, {
+  foreignKey: 'restaurant_info_id'
+});
 /**
  * Get near by places result
  *
@@ -59,11 +62,14 @@ function getRestaurantDetails(restaurantInfoId) {
 				restaurant_info_id: restaurantInfoId
 			},
 			include: [{
+				model : db.restaurantAminities,
+				attributes : ['aminity_name']
+			},{
 				model: db.restaurantTiming,
 				attributes: ['restaurant_open_close_time', 'day_of_week']
 			}, {
 				model: db.restaurantDish,
-				attributes: ['dish_image_url'],
+				attributes: ['dish_image_url', 'created_at'],
 				include : [{
 					attributes : ['dish_label'],
 					model : db.restaurantDishLabel,
@@ -242,4 +248,119 @@ exports.getRestaurantInforamtion = function (req, res) {
 			message: err.message
 		});
 	});
+};
+
+/**
+ * @swagger
+ * definition:
+ *   restaurant_dishes_info:
+ *     type: object
+ *     properties:
+ *       dish_image_url:
+ *         type: string
+ *       date:
+ *         type: string
+ */
+
+/**
+ * @swagger
+ * definition:
+ *   restaurantInformation:
+ *     type: object
+ *     properties:
+ *       restaurant_info_id:
+ *         type: string
+ *       restaurant_name:
+ *         type: string
+ *       restaurant_address:
+ *         type: string
+ *       isOpenNow:
+ *         type: boolean
+ *       restaurant_timings:
+ *         type: array
+ *         items:
+ *           $ref: '#/definitions/restaurant_timing'
+ *       restaurant_pics:
+ *          type: array
+ *          items:
+ *            $ref: '#/definitions/restaurant_dishes_info'
+ *       restaurant_aminities:
+ *          type: array
+ *          items:
+ *            type: string
+ */
+
+
+/**
+ * @swagger
+ * /api/v1/restaurant/restaurantDetails/{restaurantInfoId}:
+ *   get:
+ *     summary: Get Details of restaurant
+ *     description: Get Details of restaurant as an JSON Object
+ *     tags:
+ *       - Restaurant
+ *     parameters:
+ *      - in: path
+ *        name: restaurantInfoId
+ *        schema:
+ *          type: string
+ *        description: restaurant's unique ID
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: "successful operation"
+ *         schema:
+ *           type: object
+ *           "$ref": "#/definitions/restaurantInformation"
+ */
+
+exports.getRestaurantDetails = function (req, res) {
+  return co(function* () {
+    const restaurantInfoId = req.params.restaurantInfoId;
+    let restaurantDetails = {};
+    let restaurantInformation = yield getRestaurantDetails(restaurantInfoId);
+    let picCount, aminityCount;
+    let restaurant_pics = [], restaurantAminities = [];
+
+    let restaurantAllPics = yield findRestaurantPics(restaurantInfoId);
+
+    for(picCount = 0 ; picCount < restaurantAllPics.length; picCount++){
+      restaurant_pics.push({
+        dish_image_url : restaurantAllPics[picCount].dish_image_url,
+				date : restaurantAllPics[picCount].created_at
+      });
+    }
+    let aminities = restaurantInformation.restaurantAminities;
+
+    for(aminityCount = 0 ; aminityCount < aminities.length; aminityCount++){
+      restaurantAminities.push(
+      	aminities[aminityCount].aminity_name
+        );
+    }
+    let address_url = 'https://maps.googleapis.com/maps/api/place/details/json?placeid=' +
+      restaurantInformation.restaurant_place_id + '&key=' + key;
+
+    restaurantDetails.restaurant_info_id = restaurantInformation.restaurant_info_id;
+    restaurantDetails.restaurant_name = restaurantInformation.restaurant_name;
+    restaurantDetails.restaurant_address = restaurantInformation.restaurant_address;
+    restaurantDetails.restaurant_timings = restaurantInformation.restaurantTimings;
+    restaurantDetails.restaurant_aminities = restaurantAminities;
+    restaurantDetails.restaurant_pics = restaurant_pics;
+
+    let isHotelOpen = yield getPlaceInformation(address_url);
+    if (isHotelOpen) {
+      restaurantDetails.isOpenNow = isHotelOpen.isOpenNow;
+    }
+    return ({
+      restaurantDetails
+    });
+  }).then((restaurantDetails) => {
+    res.status(200)
+      .json(restaurantDetails);
+  }).catch((err) => {
+    res.status(400).json({
+      message: err.message
+    });
+  });
 };
