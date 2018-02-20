@@ -193,9 +193,9 @@ exports.signUp = function (req, res) {
       data = yield getUserData.getInstagramUserInfo(socialId, accessToken);
       const userInfo = {
         social_id : socialId,
-        name : data.full_name,
+        name : data.data.full_name,
         access_token : accessToken,
-        user_image_url : data.profile_picture,
+        user_image_url : data.data.profile_picture,
         social_platform : socialPlatform
       };
       userInformation = yield createUser(userInfo);

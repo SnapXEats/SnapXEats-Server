@@ -204,6 +204,14 @@ function findRestaurantData(restaurantArray, cusineArray) {
  *         type: string
  *       restaurant_name:
  *         type: string
+ *       location_lat:
+ *         type: number
+ *         format : double
+ *       location_long:
+ *         type: number
+ *         format : double
+ *       restaurant_price:
+ *         type: integer
  *       restaurantDishes:
  *         type: array
  *         items:
