@@ -396,14 +396,15 @@ exports.getUserPreferences = function (req, res) {
  * Update user preferences
  *
  * @param {Object} userPreferences - preferences of user
+ * @param {string} userId - unique id of user
  *
  * @returns {Object} result - updated result of user preferences
  */
-function updateUserPreferences(userPreferences) {
+function updateUserPreferences(userPreferences, userId) {
   return co(function* () {
     const findUserPreferences = yield db.userPreferences.find({
 			where : {
-        user_preferences_id : userPreferences.user_preferences_id
+        user_id : userId
 			},
 			attributes : ['user_preferences_id', 'restaurant_rating', 'restaurant_price',
 			'restaurant_distance', 'sort_by_distance', 'sort_by_rating']
@@ -532,7 +533,7 @@ function addUserCuisineData(addCuisinePreference, userId) {
 /**
  * @swagger
  * paths:
- *  /api/v1/userPreferences/{userPreferencesId}:
+ *  /api/v1/userPreferences/:
  *    put:
  *      summary: Edit user preferences.
  *      description: Edit preferences of user as a JSON object
@@ -552,8 +553,6 @@ function addUserCuisineData(addCuisinePreference, userId) {
  *          schema:
  *            type: object
  *            properties:
- *              user_preferences_id:
- *                type: string
  *              restaurant_rating:
  *                type: integer
  *              restaurant_price:
@@ -601,18 +600,16 @@ function addUserCuisineData(addCuisinePreference, userId) {
 exports.editUserPreferences = function (req, res) {
   return co(function* () {
     const userId = req.decodedData.user_id;
-    const user_preferences_id = req.params.userPreferencesId;
     const userCuisinePreferences = req.body.user_cuisine_preferences;
     const userFoodPreferences = req.body.user_food_preferences;
     const userPreferences = _.pick(req.body,'restaurant_rating', 'restaurant_price',
       'restaurant_distance', 'sort_by_distance', 'sort_by_rating');
-    userPreferences.user_preferences_id = user_preferences_id;
     if (userPreferences.hasOwnProperty('restaurant_rating') ||
       userPreferences.hasOwnProperty('restaurant_price') ||
       userPreferences.hasOwnProperty('restaurant_distance') ||
       userPreferences.hasOwnProperty('sort_by_distance') ||
       userPreferences.hasOwnProperty('sort_by_rating')) {
-      yield updateUserPreferences(userPreferences);
+      yield updateUserPreferences(userPreferences, userId);
     }
     if (userCuisinePreferences && userCuisinePreferences.length > 0) {
      let filteredCuisineData = yield filterCuisinePreferences(userCuisinePreferences);
