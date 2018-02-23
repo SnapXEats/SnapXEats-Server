@@ -141,11 +141,11 @@ function insertFoodTypePreferences(userFoodPreferences, userId) {
  *            type: object
  *            properties:
  *              restaurant_rating:
- *                type: string
+ *                type: integer
  *              restaurant_price:
- *                type: string
+ *                type: integer
  *              restaurant_distance:
- *                type: string
+ *                type: integer
  *              sort_by_distance:
  *                type: boolean
  *              sort_by_rating:
@@ -555,11 +555,11 @@ function addUserCuisineData(addCuisinePreference, userId) {
  *              user_preferences_id:
  *                type: string
  *              restaurant_rating:
- *                type: number
+ *                type: integer
  *              restaurant_price:
- *                type: string
+ *                type: integer
  *              restaurant_distance:
- *                type: number
+ *                type: integer
  *              sort_by_distance:
  *                type: boolean
  *              sort_by_rating:
