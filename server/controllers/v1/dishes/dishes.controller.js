@@ -149,7 +149,7 @@ function findRestaurantData(restaurantArray,restaurant_rating, restaurant_price,
       };
     }
 
-    if (typeof restaurant_rating !== "undefined"){
+    if (typeof restaurant_rating !== "undefined" && restaurant_rating !== 0){
       whereClauseForRating = {
           $gte: parseFloat(restaurant_rating),
           $lte: parseFloat(restaurant_rating) + 0.9
@@ -161,7 +161,7 @@ function findRestaurantData(restaurantArray,restaurant_rating, restaurant_price,
       };
     }
 
-    if(typeof restaurant_price !== "undefined"){
+    if(typeof restaurant_price !== "undefined" && restaurant_price !== 0){
       whereClauseForPrice = restaurant_price;
     } else {
       whereClauseForPrice = {
