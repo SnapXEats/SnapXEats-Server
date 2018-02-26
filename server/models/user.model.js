@@ -45,6 +45,10 @@ module.exports = function (sequelize, DataTypes) {
       allowNull : false,
       defaultValue : CONSTANTS.DB.STATUS.ACTIVE
     },
+    first_time_login : {
+      type : DataTypes.BOOLEAN,
+      defaultValue : true
+    },
     salt : {
       type : DataTypes.STRING
     }
