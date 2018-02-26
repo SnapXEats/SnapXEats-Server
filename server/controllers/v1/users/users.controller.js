@@ -162,6 +162,8 @@ function issueToken(id, userType) {
  *                type: string
  *              social_id:
  *                type: string
+ *              first_time_login:
+ *                type: string
  *      responses:
  *        201:
  *          description: Created
@@ -177,7 +179,8 @@ exports.signUp = function (req, res) {
     const userData = yield findUser(socialId, socialPlatform);
     if (userData) {
       userInformation = yield userData.updateAttributes({
-        access_token : accessToken
+        access_token : accessToken,
+        first_time_login : false
       });
     } else if (socialPlatform === CONSTANTS.SOCIAL_PLATFORM.FACEBOOK) {
       data = yield getUserData.getFBUserInfo(socialId, accessToken);
@@ -204,7 +207,8 @@ exports.signUp = function (req, res) {
     return ({
       token,
       user_id : userInformation.user_id,
-      social_platform : socialPlatform
+      social_platform : socialPlatform,
+      first_time_login : userInformation.first_time_login
     });
   }).then((createdUserData) => {
     res.status(200)
@@ -348,4 +352,54 @@ exports.getUserAddresses = function (req, res) {
 			message: err.message
 		});
 	});
+};
+
+/**
+ * @swagger
+ * /api/v1/users/logout:
+ *   get:
+ *     summary: User can logged out
+ *     description: User can logged out from this API
+ *     tags:
+ *       - Users
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         description: an authorization header (Bearer eyJhbGciOiJI...)
+ *         required: true
+ *         type: string
+ *     responses:
+ *       200:
+ *         description: "successful operation"
+ *         schema:
+ *           name: message
+ *           type: string
+ */
+
+exports.loggedOutUser = function (req, res) {
+  return co(function* () {
+    const userId = req.decodedData.user_id;
+    let userInformation = yield db.userToken.find({
+      where : {
+        user_id: userId
+      }
+    });
+
+    yield userInformation.updateAttributes({
+      access_token : null
+    });
+
+    return ({
+     "message" : "User logged out successfully"
+    });
+  }).then((userLogOutInfo) => {
+    res.status(200)
+      .json(userLogOutInfo);
+  }).catch((err) => {
+    res.status(400).json({
+      message: err.message
+    });
+  });
 };
