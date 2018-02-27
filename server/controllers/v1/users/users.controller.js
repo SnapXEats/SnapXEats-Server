@@ -163,7 +163,7 @@ function issueToken(id, userType) {
  *              social_id:
  *                type: string
  *              first_time_login:
- *                type: string
+ *                type: boolean
  *      responses:
  *        201:
  *          description: Created

@@ -142,6 +142,18 @@ function findRestaurantPics(restaurantInfoId) {
 /**
  * @swagger
  * definition:
+ *   restaurant_dishes_info:
+ *     type: object
+ *     properties:
+ *       dish_image_url:
+ *         type: string
+ *       created_at:
+ *         type: string
+ */
+
+/**
+ * @swagger
+ * definition:
  *   restaurantDetails:
  *     type: object
  *     properties:
@@ -170,7 +182,11 @@ function findRestaurantPics(restaurantInfoId) {
  *       restaurant_pics:
  *          type: array
  *          items:
- *            $ref: '#/definitions/restaurant_dishes'
+ *            $ref: '#/definitions/restaurant_dishes_info'
+ *       restaurant_aminities:
+ *          type: array
+ *          items:
+ *            type: string
  */
 
 /**
@@ -201,8 +217,8 @@ exports.getRestaurantInforamtion = function (req, res) {
 		const restaurantInfoId = req.params.restaurantInfoId;
 		let restaurantDetails = {};
 		let restaurantInformation = yield getRestaurantDetails(restaurantInfoId);
-		let foodImageCount, picCount;
-		let restaurant_speciality = [], restaurant_pics = [];
+		let foodImageCount, picCount, aminityCount;
+		let restaurant_speciality = [], restaurant_pics = [], restaurantAminities = [];
 		for(foodImageCount = 0 ; foodImageCount < restaurantInformation.restaurantDishes.length;
 		foodImageCount++){
       restaurant_speciality.push({
@@ -214,8 +230,17 @@ exports.getRestaurantInforamtion = function (req, res) {
 
     for(picCount = 0 ; picCount < restaurantAllPics.length; picCount++){
       restaurant_pics.push({
-        dish_image_url : restaurantAllPics[picCount].dish_image_url
+        dish_image_url : restaurantAllPics[picCount].dish_image_url,
+        created_date : restaurantAllPics[picCount].created_at
       });
+    }
+
+    let aminities = restaurantInformation.restaurantAminities;
+
+    for(aminityCount = 0 ; aminityCount < aminities.length; aminityCount++){
+      restaurantAminities.push(
+        aminities[aminityCount].aminity_name
+      );
     }
 
 		let address_url = 'https://maps.googleapis.com/maps/api/place/details/json?placeid=' +
@@ -231,6 +256,7 @@ exports.getRestaurantInforamtion = function (req, res) {
 		restaurantDetails.restaurant_price = restaurantInformation.restaurant_price;
 		restaurantDetails.restaurant_timings = restaurantInformation.restaurantTimings;
 		restaurantDetails.restaurant_speciality = restaurant_speciality;
+    restaurantDetails.restaurant_aminities = restaurantAminities;
 		restaurantDetails.restaurant_pics = restaurant_pics;
 
 		let isHotelOpen = yield getPlaceInformation(address_url);
@@ -249,18 +275,6 @@ exports.getRestaurantInforamtion = function (req, res) {
 		});
 	});
 };
-
-/**
- * @swagger
- * definition:
- *   restaurant_dishes_info:
- *     type: object
- *     properties:
- *       dish_image_url:
- *         type: string
- *       date:
- *         type: string
- */
 
 /**
  * @swagger
