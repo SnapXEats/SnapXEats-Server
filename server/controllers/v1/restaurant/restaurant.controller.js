@@ -183,7 +183,7 @@ function findRestaurantPics(restaurantInfoId) {
  *          type: array
  *          items:
  *            $ref: '#/definitions/restaurant_dishes_info'
- *       restaurant_aminities:
+ *       restaurant_amenities:
  *          type: array
  *          items:
  *            type: string
@@ -217,8 +217,8 @@ exports.getRestaurantInforamtion = function (req, res) {
 		const restaurantInfoId = req.params.restaurantInfoId;
 		let restaurantDetails = {};
 		let restaurantInformation = yield getRestaurantDetails(restaurantInfoId);
-		let foodImageCount, picCount, aminityCount;
-		let restaurant_speciality = [], restaurant_pics = [], restaurantAminities = [];
+		let foodImageCount, picCount, amenityCount;
+		let restaurant_speciality = [], restaurant_pics = [], restaurantAmenities = [];
 		for(foodImageCount = 0 ; foodImageCount < restaurantInformation.restaurantDishes.length;
 		foodImageCount++){
       restaurant_speciality.push({
@@ -235,11 +235,11 @@ exports.getRestaurantInforamtion = function (req, res) {
       });
     }
 
-    let aminities = restaurantInformation.restaurantAminities;
+    let amenities = restaurantInformation.restaurantAminities;
 
-    for(aminityCount = 0 ; aminityCount < aminities.length; aminityCount++){
-      restaurantAminities.push(
-        aminities[aminityCount].aminity_name
+    for(amenityCount = 0 ; amenityCount < amenities.length; amenityCount++){
+      restaurantAmenities.push(
+        amenities[amenityCount].aminity_name
       );
     }
 
@@ -256,7 +256,7 @@ exports.getRestaurantInforamtion = function (req, res) {
 		restaurantDetails.restaurant_price = restaurantInformation.restaurant_price;
 		restaurantDetails.restaurant_timings = restaurantInformation.restaurantTimings;
 		restaurantDetails.restaurant_speciality = restaurant_speciality;
-    restaurantDetails.restaurant_aminities = restaurantAminities;
+    restaurantDetails.restaurant_amenities = restaurantAmenities;
 		restaurantDetails.restaurant_pics = restaurant_pics;
 
 		let isHotelOpen = yield getPlaceInformation(address_url);
