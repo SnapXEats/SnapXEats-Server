@@ -102,7 +102,7 @@ function findRestaurantPics(restaurantInfoId) {
 			where : {
         restaurant_info_id : restaurantInfoId
 			},
-      attributes: ['dish_image_url'],
+      attributes: ['dish_image_url','created_at'],
       order : [
         [db.restaurantDishLabel,'dish_label', 'ASC']
       ],
@@ -328,7 +328,7 @@ exports.getRestaurantDetails = function (req, res) {
     for(picCount = 0 ; picCount < restaurantAllPics.length; picCount++){
       restaurant_pics.push({
         dish_image_url : restaurantAllPics[picCount].dish_image_url,
-				date : restaurantAllPics[picCount].created_at
+				created_date : restaurantAllPics[picCount].created_at
       });
     }
     let aminities = restaurantInformation.restaurantAminities;

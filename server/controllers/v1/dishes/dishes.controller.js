@@ -72,6 +72,7 @@ function getPlacesResult(adress, googleIds) {
  * @param {String} latitude - url address
  * @param {String}  longitude - for push result of google id
  * @param {Number}  distance - for push result of google id
+ * @param {Boolean} sort_by_distance - for sorting distance wise
  * @param {Array}  googleIds - for push result of google id
  * @param {String}  pagetoken - for push result of google id
  *
@@ -86,7 +87,7 @@ function getRestaurant(latitude, longitude, distance, sort_by_distance, googleId
     if (pagetoken) {
       sleep(1200);
       if(sort_by_distance){
-        adr = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?rankby=distance&location=${latitude},${longitude}&radius=${distance}&type=restaurant&key=${key}&pagetoken=${pagetoken}`;
+        adr = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?rankBy=distance&location=${latitude},${longitude}&radius=${distance}&type=restaurant&key=${key}&pagetoken=${pagetoken}`;
         result = yield getPlacesResult(adr, googleIds);
       } else {
         adr = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${distance}&type=restaurant&key=${key}&pagetoken=${pagetoken}`;
@@ -95,7 +96,7 @@ function getRestaurant(latitude, longitude, distance, sort_by_distance, googleId
 
     } else {
       if(sort_by_distance){
-        adr = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?rankby=distance&location=${latitude},${longitude}&radius=${distance}&type=restaurant&key=${key}`;
+        adr = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?rankBy=distance&location=${latitude},${longitude}&radius=${distance}&type=restaurant&key=${key}`;
         result = yield getPlacesResult(adr, googleIds);
       } else {
         adr = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=${latitude},${longitude}&radius=${distance}&type=restaurant&key=${key}`;
@@ -138,22 +139,28 @@ function findRestaurantData(restaurantArray,restaurant_rating, restaurant_price,
     const findFoodLabelArray = [];
 
     if (cusineArray.length > 0) {
-      cusineArray.forEach((cuisine) => {
+      for (let cuisineCount = 0; cuisineCount < cusineArray.length; cuisineCount++) {
+        let cuisineInfoId = cusineArray[cuisineCount];
+        let foodLabel = yield db.cuisineInfo.find({
+          where: {
+            cuisine_info_id: cuisineInfoId
+          }
+        });
         const labelJson = {
-          dish_label: cuisine
+          dish_label: foodLabel.cuisine_name
         };
         findFoodLabelArray.push(labelJson);
-      });
+      }
       whereClause = {
-        $or : findFoodLabelArray
+        $or: findFoodLabelArray
       };
     }
 
-    if (typeof restaurant_rating !== "undefined" && restaurant_rating !== 0){
+    if (restaurant_rating > 0){
       whereClauseForRating = {
-          $gte: parseFloat(restaurant_rating),
-          $lte: parseFloat(restaurant_rating) + 0.9
-        };
+        $gte: parseFloat(restaurant_rating),
+        $lte: parseFloat(restaurant_rating) + 0.9
+      };
     } else {
       whereClauseForRating = {
         $gte: 0,
@@ -161,7 +168,7 @@ function findRestaurantData(restaurantArray,restaurant_rating, restaurant_price,
       };
     }
 
-    if(typeof restaurant_price !== "undefined" && restaurant_price !== 0){
+    if(restaurant_price > 0){
       whereClauseForPrice = restaurant_price;
     } else {
       whereClauseForPrice = {
