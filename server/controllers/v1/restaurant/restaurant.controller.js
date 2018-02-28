@@ -147,7 +147,7 @@ function findRestaurantPics(restaurantInfoId) {
  *     properties:
  *       dish_image_url:
  *         type: string
- *       created_at:
+ *       created_date:
  *         type: string
  */
 
