@@ -187,6 +187,74 @@ exports.insertUserGestures = function (req, res) {
 };
 
 /**
+ * findUserWishList (Find user wishlist from db)
+ *
+ * @param {String} user_id - Unique user id for search wishlist
+ *
+ * @returns {Array} userGestures - Object (user wishlist object)
+ *
+ */
+function findUserWishList(user_id) {
+  return co(function* () {
+    let userGestures = yield db.userGestures.findAll({
+      where : {
+        user_id : user_id,
+        gesture_type : CONSTANTS.USER_GESTURE.WISHLIST_OF_USER,
+        status : CONSTANTS.DB.STATUS.ACTIVE
+      },
+      attributes : ['user_gesture_id','restaurant_dish_id','created_at'],
+      include : [{
+        model : db.restaurantDish,
+        attributes : ['restaurant_info_id', 'dish_image_url'],
+        include : [{
+          model : db.restaurantInfo,
+          attributes : ['restaurant_name', 'restaurant_address']
+        }]
+      }]
+    });
+    return Promise.resolve(userGestures);
+  }).catch((err) => {
+    return err;
+  });
+}
+
+/**
+ * filterUserWishListArray (Filter user wish list array and make JSON array)
+ *
+ * @param {Array} userGestures - user wish list Array
+ *
+ * @returns {Array} user_wishlist - Object (user wishlist object)
+ *
+ */
+function filterUserWishListArray(userGestures) {
+  return co(function* () {
+    let user_wishlist = [];
+    let wishlist_count;
+    for(wishlist_count = 0; wishlist_count < userGestures.length; wishlist_count++){
+      let wishlist = userGestures[wishlist_count];
+      let wishlist_object = {
+        user_gesture_id : wishlist.user_gesture_id,
+        restaurant_info_id : wishlist.restaurantDish.restaurant_info_id,
+        restaurant_name : wishlist.restaurantDish.restaurantInfo.restaurant_name,
+        restaurant_address : wishlist.restaurantDish.restaurantInfo.restaurant_address,
+        dish_image_url : wishlist.restaurantDish.dish_image_url,
+        created_at : wishlist.created_at
+      };
+      user_wishlist.push(wishlist_object);
+    }
+
+    if(wishlist_count === userGestures.length){
+      return ({
+        user_wishlist
+      });
+    }
+    return Promise.resolve(userGestures);
+  }).catch((err) => {
+    return err;
+  });
+}
+
+/**
  * @swagger
  * definition:
  *   wishListInfo:
@@ -248,44 +316,9 @@ exports.insertUserGestures = function (req, res) {
 exports.getUserWishList = function (req, res) {
   return co(function* () {
     let user_id = req.decodedData.user_id;
-    let user_wishlist = [];
-    let wishlist_count;
+    let userGestures = yield findUserWishList(user_id);
+    return yield filterUserWishListArray(userGestures);
 
-    let userGestures = yield db.userGestures.findAll({
-      where : {
-        user_id : user_id,
-        gesture_type : CONSTANTS.USER_GESTURE.WISHLIST_OF_USER,
-        status : CONSTANTS.DB.STATUS.ACTIVE
-      },
-      attributes : ['user_gesture_id','restaurant_dish_id','created_at'],
-      include : [{
-        model : db.restaurantDish,
-        attributes : ['restaurant_info_id', 'dish_image_url'],
-        include : [{
-          model : db.restaurantInfo,
-          attributes : ['restaurant_name', 'restaurant_address']
-        }]
-      }]
-    });
-
-    for(wishlist_count = 0; wishlist_count < userGestures.length; wishlist_count++){
-      let wishlist = userGestures[wishlist_count];
-      let wishlist_object = {
-        user_gesture_id : wishlist.user_gesture_id,
-        restaurant_info_id : wishlist.restaurantDish.restaurant_info_id,
-        restaurant_name : wishlist.restaurantDish.restaurantInfo.restaurant_name,
-        restaurant_address : wishlist.restaurantDish.restaurantInfo.restaurant_address,
-        dish_image_url : wishlist.restaurantDish.dish_image_url,
-        created_at : wishlist.created_at
-      };
-      user_wishlist.push(wishlist_object);
-    }
-
-    if(wishlist_count === userGestures.length){
-      return ({
-        user_wishlist
-      });
-    }
   }).then((userWishList) => {
     res.status(200)
       .json(userWishList);
