@@ -13,6 +13,10 @@ db.restaurantDish.belongsTo(db.restaurantInfo, {
   foreignKey: 'restaurant_info_id'
 });
 
+db.userGestures.belongsTo(db.restaurantDish, {
+  foreignKey: 'restaurant_dish_id'
+});
+
 /**
  * insertLikeDishByUser (Insert dish which is like by user)
  *
@@ -180,4 +184,114 @@ exports.insertUserGestures = function (req, res) {
 			message: err.message
 		});
 	});
+};
+
+/**
+ * @swagger
+ * definition:
+ *   wishListInfo:
+ *     type: object
+ *     properties:
+ *       user_gesture_id:
+ *         type: string
+ *       restaurant_info_id:
+ *         type: string
+ *       restaurant_name:
+ *         type: string
+ *       restaurant_address:
+ *         type: string
+ *       dish_image_url:
+ *         type: string
+ *       created_at:
+ *          type: string
+ */
+
+/**
+ * @swagger
+ * definition:
+ *   user_wishlist:
+ *     type: object
+ *     properties:
+ *       user_wishlist:
+ *         type: array
+ *         items:
+ *           $ref: "#/definitions/wishListInfo"
+ */
+
+/**
+ * @swagger
+ * paths:
+ *  /api/v1/userGesture/wishlist:
+ *    get:
+ *      summary: Get user wish list of dish.
+ *      tags:
+ *        - User Gestures
+ *      description: Get user wish list of dish as a JSON array
+ *      consumes:
+ *        - application/json
+ *      parameters:
+ *        - in: header
+ *          name: Authorization
+ *          description: an authorization header (Bearer eyJhbGciOiJI...)
+ *          required: true
+ *          type: string
+ *      produces:
+ *       - application/json
+ *      responses:
+ *        200:
+ *          description: "successful operation"
+ *          schema:
+ *            type: object
+ *            "$ref": "#/definitions/user_wishlist"
+ */
+
+exports.getUserWishList = function (req, res) {
+  return co(function* () {
+    let user_id = req.decodedData.user_id;
+    let user_wishlist = [];
+    let wishlist_count;
+
+    let userGestures = yield db.userGestures.findAll({
+      where : {
+        user_id : user_id,
+        gesture_type : CONSTANTS.USER_GESTURE.WISHLIST_OF_USER,
+        status : CONSTANTS.DB.STATUS.ACTIVE
+      },
+      attributes : ['user_gesture_id','restaurant_dish_id','created_at'],
+      include : [{
+        model : db.restaurantDish,
+        attributes : ['restaurant_info_id', 'dish_image_url'],
+        include : [{
+          model : db.restaurantInfo,
+          attributes : ['restaurant_name', 'restaurant_address']
+        }]
+      }]
+    });
+
+    for(wishlist_count = 0; wishlist_count < userGestures.length; wishlist_count++){
+      let wishlist = userGestures[wishlist_count];
+      let wishlist_object = {
+        user_gesture_id : wishlist.user_gesture_id,
+        restaurant_info_id : wishlist.restaurantDish.restaurant_info_id,
+        restaurant_name : wishlist.restaurantDish.restaurantInfo.restaurant_name,
+        restaurant_address : wishlist.restaurantDish.restaurantInfo.restaurant_address,
+        dish_image_url : wishlist.restaurantDish.dish_image_url,
+        created_at : wishlist.created_at
+      };
+      user_wishlist.push(wishlist_object);
+    }
+
+    if(wishlist_count === userGestures.length){
+      return ({
+        user_wishlist
+      });
+    }
+  }).then((userWishList) => {
+    res.status(200)
+      .json(userWishList);
+  }).catch((err) => {
+    res.status(400).json({
+      message: err.message
+    });
+  });
 };

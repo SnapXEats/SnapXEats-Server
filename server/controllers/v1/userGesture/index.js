@@ -5,5 +5,6 @@ const router = require('express').Router();
 const auth = require('./../../../../lib/auth');
 
 router.post('/', auth.isAuthenticated(), controller.insertUserGestures);
+router.get('/wishlist', auth.isAuthenticated(), controller.getUserWishList);
 
 module.exports = router;
