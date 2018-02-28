@@ -137,8 +137,7 @@ function findRestaurantData(restaurantArray,restaurant_rating, restaurant_price,
     let whereClause = {};
     let whereClauseForRating, whereClauseForPrice;
     const findFoodLabelArray = [];
-
-    if (cusineArray.length > 0) {
+    if (cusineArray && cusineArray.length > 0) {
       for (let cuisineCount = 0; cuisineCount < cusineArray.length; cuisineCount++) {
         let cuisineInfoId = cusineArray[cuisineCount];
         let foodLabel = yield db.cuisineInfo.find({
@@ -407,7 +406,7 @@ exports.getDIshes = function (req, res) {
         sort_by_rating = preferenceData.sort_by_rating;
       }
 
-      if(userFoodPreferenceData.length > 0){
+      if(userFoodPreferenceData && userFoodPreferenceData.length > 0){
         userFoodPreferenceData.forEach((foodObject) => {
           foodPreferenceData.push(foodObject.food_type_info_id);
         });
