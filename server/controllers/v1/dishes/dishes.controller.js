@@ -157,8 +157,8 @@ function findRestaurantData(restaurantArray,restaurant_rating, restaurant_price,
 
     if (restaurant_rating > 0){
       whereClauseForRating = {
-        $gte: parseFloat(restaurant_rating),
-        $lte: parseFloat(restaurant_rating) + 0.9
+        $lte: parseFloat(restaurant_rating),
+        $gte: parseFloat(restaurant_rating) - 0.9
       };
     } else {
       whereClauseForRating = {

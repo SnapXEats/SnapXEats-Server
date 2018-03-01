@@ -328,3 +328,101 @@ exports.getUserWishList = function (req, res) {
     });
   });
 };
+
+/**
+ * deleteUserWishListData (Delete user wish list from db)
+ *
+ * @param {Array} userGestures - user wish list Array
+ *
+ * @returns {Object} message - string (success response)
+ *
+ */
+function deleteUserWishListData(userGestures) {
+  return co(function* () {
+    let wishlist_count;
+    for(wishlist_count = 0; wishlist_count < userGestures.length; wishlist_count++){
+      let wishlist = userGestures[wishlist_count];
+      yield db.userGestures.destroy({
+        where : {
+          user_gesture_id : wishlist.user_gesture_id
+        }
+      });
+    }
+
+    if(wishlist_count === userGestures.length){
+      return ({
+        message : "user wishlist deleted successfully"
+      });
+    }
+    return Promise.resolve(userGestures);
+  }).catch((err) => {
+    return err;
+  });
+}
+/**
+ * @swagger
+ * definition:
+ *   wishList:
+ *     type: object
+ *     properties:
+ *       user_gesture_id:
+ *         type: string
+ */
+
+/**
+ * @swagger
+ * paths:
+ *  /api/v1/userGesture/wishlist/:
+ *    delete:
+ *      summary: Delete user wish list of dish.
+ *      tags:
+ *        - User Gestures
+ *      description: delete user wish list of dish as a JSON array
+ *      consumes:
+ *        - application/json
+ *      parameters:
+ *        - in: header
+ *          name: Authorization
+ *          description: an authorization header (Bearer eyJhbGciOiJI...)
+ *          required: true
+ *          type: string
+ *        - in: body
+ *          name: user preferences
+ *          description: Set user preferences.
+ *          schema:
+ *            type: object
+ *            properties:
+ *              user_wishlist:
+ *                type: array
+ *                items:
+ *                  "$ref": "#/definitions/wishList"
+ *      produces:
+ *       - application/json
+ *      responses:
+ *        200:
+ *          description: "successful operation"
+ *          schema:
+ *            type: object
+ *            properties:
+ *              message:
+ *                type: string
+ */
+
+exports.deleteUserWishList = function (req, res) {
+  return co(function* () {
+    let userGestures = req.body.user_wishlist;
+    if(userGestures && userGestures.length > 0){
+      return yield deleteUserWishListData(userGestures);
+    } else {
+      throw new Error("Some data is missing");
+    }
+
+  }).then((deleteUserWishListMsg) => {
+    res.status(200)
+      .json(deleteUserWishListMsg);
+  }).catch((err) => {
+    res.status(400).json({
+      message: err.message
+    });
+  });
+};
