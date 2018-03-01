@@ -6,5 +6,6 @@ const auth = require('./../../../../lib/auth');
 
 router.post('/', auth.isAuthenticated(), controller.insertUserGestures);
 router.get('/wishlist', auth.isAuthenticated(), controller.getUserWishList);
+router.delete('/wishlist', auth.isAuthenticated(), controller.deleteUserWishList);
 
 module.exports = router;
