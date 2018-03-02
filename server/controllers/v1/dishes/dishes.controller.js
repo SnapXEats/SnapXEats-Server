@@ -85,7 +85,7 @@ function getRestaurant(latitude, longitude, distance, sort_by_distance, googleId
     let pgtoken;
     let result;
     if (pagetoken) {
-      sleep(1200);
+      sleep(1500);
       if(sort_by_distance){
         adr = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?rankBy=distance&location=${latitude},${longitude}&radius=${distance}&type=restaurant&key=${key}&pagetoken=${pagetoken}`;
         result = yield getPlacesResult(adr, googleIds);
@@ -155,10 +155,10 @@ function findRestaurantData(restaurantArray,restaurant_rating, restaurant_price,
       };
     }
 
-    if (restaurant_rating > 0){
+    if (restaurant_rating > 3){
       whereClauseForRating = {
-        $lte: parseFloat(restaurant_rating),
-        $gte: parseFloat(restaurant_rating) - 0.9
+        $lte: parseFloat(restaurant_rating) + 0.5,
+        $gte: parseFloat(restaurant_rating) - 0.5
       };
     } else {
       whereClauseForRating = {
@@ -168,7 +168,10 @@ function findRestaurantData(restaurantArray,restaurant_rating, restaurant_price,
     }
 
     if(restaurant_price > 0){
-      whereClauseForPrice = restaurant_price;
+      whereClauseForPrice = {
+        $gte: parseFloat(restaurant_price) - 1,
+        $lte: parseFloat(restaurant_price) + 1
+      };
     } else {
       whereClauseForPrice = {
         $gte: 0,
@@ -447,6 +450,11 @@ exports.getDIshes = function (req, res) {
 
     let data = yield getRestaurant(req.query.latitude, req.query.longitude, distance,
       sort_by_distance, googleIds);
+    if (data.pgtoken) {
+      data = yield getRestaurant(req.query.latitude, req.query.longitude,
+        distance, sort_by_distance, data.googleIds, data.pgtoken);
+    }
+
     if (data.pgtoken) {
       data = yield getRestaurant(req.query.latitude, req.query.longitude,
         distance, sort_by_distance, data.googleIds, data.pgtoken);
