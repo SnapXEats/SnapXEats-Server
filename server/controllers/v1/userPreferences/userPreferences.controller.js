@@ -418,20 +418,28 @@ function updateUserPreferences(userPreferences, userId) {
   });
 }
 
-function filterCuisinePreferences(userCuisinePreferences) {
-  return new Promise((resolve, reject)=>{
+function filterCuisinePreferences(userCuisinePreferences, user_id) {
+  return co(function* () {
   	let cuisineCount, updateCuisinePreference = [], addCuisinePreference = [];
   	for(cuisineCount = 0; cuisineCount < userCuisinePreferences.length; cuisineCount++){
   		let cuisine = userCuisinePreferences[cuisineCount];
-  		if(cuisine.hasOwnProperty('user_cuisine_preferences_id')){
-        updateCuisinePreference.push(cuisine);
-			} else if(cuisine.hasOwnProperty('cuisine_info_id') && (cuisine.hasOwnProperty('is_cuisine_favourite')
+  		if(cuisine.hasOwnProperty('cuisine_info_id') && (cuisine.hasOwnProperty('is_cuisine_favourite')
 				|| cuisine.hasOwnProperty('is_cuisine_like'))){
-        addCuisinePreference.push(cuisine);
+  		  let findCuisineInfo = yield db.userCuisinePreferences.find({
+          where : {
+            cuisine_info_id : cuisine.cuisine_info_id,
+            user_id : user_id
+          }
+        });
+  		  if(findCuisineInfo){
+          updateCuisinePreference.push(cuisine);
+        } else {
+          addCuisinePreference.push(cuisine);
+        }
 			}
 		}
 		if(cuisineCount === userCuisinePreferences.length){
-  		resolve({
+  		return({
         addCuisinePreference,
         updateCuisinePreference
       });
@@ -439,20 +447,28 @@ function filterCuisinePreferences(userCuisinePreferences) {
 	})
 }
 
-function filterFoodPreferences(userFoodPreferences) {
-  return new Promise((resolve, reject)=>{
+function filterFoodPreferences(userFoodPreferences, user_id) {
+  return co(function* () {
     let foodCount, updateFoodPreference = [], addFoodPreference = [];
     for(foodCount = 0; foodCount < userFoodPreferences.length; foodCount++){
       let foodType = userFoodPreferences[foodCount];
-      if(foodType.hasOwnProperty('user_food_preferences_id')){
-        updateFoodPreference.push(foodType);
-      } else if(foodType.hasOwnProperty('food_type_info_id') &&
+      if(foodType.hasOwnProperty('food_type_info_id') &&
         (foodType.hasOwnProperty('is_food_favourite') || foodType.hasOwnProperty('is_food_like'))){
-        addFoodPreference.push(foodType);
+        let findFoodInfo = yield db.userFoodPreferences.find({
+          where : {
+            food_type_info_id : foodType.food_type_info_id,
+            user_id : user_id
+          }
+        });
+        if(findFoodInfo){
+          updateFoodPreference.push(foodType);
+        } else {
+          addFoodPreference.push(foodType);
+        }
       }
     }
     if(foodCount === userFoodPreferences.length){
-      resolve({
+      return({
         addFoodPreference,
         updateFoodPreference
       });
@@ -460,14 +476,17 @@ function filterFoodPreferences(userFoodPreferences) {
   })
 }
 
-function updateUserCuisineData(updateCuisinePreference) {
+function updateUserCuisineData(updateCuisinePreference, user_id) {
   return co(function* () {
     let cuisineCount;
     for(cuisineCount = 0; cuisineCount < updateCuisinePreference.length; cuisineCount++){
-      const findUserCuisinePreferences = yield db.userCuisinePreferences.find({
+      let findUserCuisinePreferences = yield db.userCuisinePreferences.find({
         where : {
-          user_cuisine_preferences_id : updateCuisinePreference[cuisineCount].user_cuisine_preferences_id
-        }
+          cuisine_info_id : updateCuisinePreference[cuisineCount].cuisine_info_id,
+          user_id : user_id
+        },
+        attributes : ['user_cuisine_preferences_id','cuisine_info_id', 'user_id',
+        'is_cuisine_like', 'is_cuisine_favourite']
       });
 
       yield findUserCuisinePreferences.updateAttributes(updateCuisinePreference[cuisineCount]);
@@ -481,14 +500,17 @@ function updateUserCuisineData(updateCuisinePreference) {
 }
 
 
-function updateUserFoodData(updateFoodPreference) {
+function updateUserFoodData(updateFoodPreference, user_id) {
   return co(function* () {
     let foodCount;
     for(foodCount = 0; foodCount < updateFoodPreference.length; foodCount++){
-      const findUserFoodPreferences = yield db.userFoodPreferences.find({
+      let findUserFoodPreferences = yield db.userFoodPreferences.find({
         where : {
-          user_food_preferences_id : updateFoodPreference[foodCount].user_food_preferences_id
-        }
+          food_type_info_id : updateFoodPreference[foodCount].food_type_info_id,
+          user_id : user_id
+        },
+        attributes : ['user_food_preferences_id', 'user_id', 'food_type_info_id',
+        'is_food_like', 'is_food_favourite']
       });
 
       yield findUserFoodPreferences.updateAttributes(updateFoodPreference[foodCount]);
@@ -508,7 +530,7 @@ function addUserFoodData(addFoodPreference, userId) {
     for(foodCount = 0; foodCount < addFoodPreference.length; foodCount++){
       let foodType = addFoodPreference[foodCount];
       foodType.user_id = userId;
-      const addedUserFoodPreferences = yield db.userFoodPreferences.create(foodType);
+      yield db.userFoodPreferences.create(foodType);
     }
     if(foodCount === addFoodPreference.length){
       return Promise.resolve({"msg" : "All food type added successfully"} );
@@ -524,7 +546,7 @@ function addUserCuisineData(addCuisinePreference, userId) {
     for(cuisineCount = 0; cuisineCount < addCuisinePreference.length; cuisineCount++){
       let cuisineType = addCuisinePreference[cuisineCount];
       cuisineType.user_id = userId;
-      const addedUserCuisinePreferences = yield db.userCuisinePreferences.create(cuisineType);
+      yield db.userCuisinePreferences.create(cuisineType);
     }
     if(cuisineCount === addCuisinePreference.length){
       return Promise.resolve({"msg" : "All cuisine type added successfully"} );
@@ -572,16 +594,6 @@ function addUserCuisineData(addCuisinePreference, userId) {
  *                items:
  *                  - type : object
  *                    properties:
- *                      user_cuisine_preferences_id:
- *                        type: string
- *                      cuisine_info_id:
- *                        type: string
- *                      is_cuisine_like:
- *                        type: boolean
- *                      is_cuisine_favourite:
- *                        type: boolean
- *                  - type : object
- *                    properties:
  *                      cuisine_info_id:
  *                        type: string
  *                      is_cuisine_like:
@@ -591,16 +603,6 @@ function addUserCuisineData(addCuisinePreference, userId) {
  *              user_food_preferences:
  *                type: array
  *                items:
- *                  - type : object
- *                    properties:
- *                      user_food_preferences_id:
- *                        type: string
- *                      food_type_info_id:
- *                        type: string
- *                      is_food_like:
- *                        type: boolean
- *                      is_food_favourite:
- *                        type: boolean
  *                  - type : object
  *                    properties:
  *                      food_type_info_id:
@@ -628,14 +630,14 @@ exports.editUserPreferences = function (req, res) {
       yield updateUserPreferences(userPreferences, userId);
     }
     if (userCuisinePreferences && userCuisinePreferences.length > 0) {
-     let filteredCuisineData = yield filterCuisinePreferences(userCuisinePreferences);
+     let filteredCuisineData = yield filterCuisinePreferences(userCuisinePreferences,userId);
      yield addUserCuisineData(filteredCuisineData.addCuisinePreference, userId);
-     yield updateUserCuisineData(filteredCuisineData.updateCuisinePreference);
+     yield updateUserCuisineData(filteredCuisineData.updateCuisinePreference, userId);
     }
     if (userFoodPreferences && userFoodPreferences.length > 0) {
-      let filteredFoodData = yield filterFoodPreferences(userFoodPreferences);
+      let filteredFoodData = yield filterFoodPreferences(userFoodPreferences, userId);
       yield addUserFoodData(filteredFoodData.addFoodPreference, userId);
-      yield updateUserFoodData(filteredFoodData.updateFoodPreference);
+      yield updateUserFoodData(filteredFoodData.updateFoodPreference, userId);
     }
     return ({
       message: 'all preferences updated succesfully'
