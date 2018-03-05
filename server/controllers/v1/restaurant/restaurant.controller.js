@@ -8,6 +8,10 @@ const co = require('co');
 
 const requestPromise = require('request-promise');
 
+const _ = require('underscore');
+
+const CONSTANTS = require('./../../../../lib/constants');
+
 const key = process.env.googleKey;
 
 db.restaurantInfo.hasMany(db.restaurantTiming, {
@@ -372,6 +376,65 @@ exports.getRestaurantDetails = function (req, res) {
   }).then((restaurantDetails) => {
     res.status(200)
       .json(restaurantDetails);
+  }).catch((err) => {
+    res.status(400).json({
+      message: err.message
+    });
+  });
+};
+
+/**
+ * @swagger
+ * paths:
+ *  /api/v1/restaurant/checkIn:
+ *    post:
+ *      summary: Create user check in into the restaurant.
+ *      tags:
+ *        - Restaurant
+ *      description: insert user check in into the restaurant as a JSON object
+ *      consumes:
+ *        - application/json
+ *      parameters:
+ *        - in: header
+ *          name: Authorization
+ *          description: an authorization header (Bearer eyJhbGciOiJI...)
+ *          required: true
+ *          type: string
+ *        - in: body
+ *          name: user gestures
+ *          description: User check in into the restaurant.
+ *          schema:
+ *            type: object
+ *            properties:
+ *              restaurant_info_id:
+ *                type: string
+ *              reward_point:
+ *                type: integer
+ *      produces:
+ *       - application/json
+ *      responses:
+ *        200:
+ *          description: "successful operation"
+ *          schema:
+ *            type: object
+ *            properties:
+ *              message:
+ *                type: string
+ */
+
+exports.userCheckIn = function (req, res) {
+  return co(function* () {
+    let userRewardsData = _.pick(req.body,'restaurant_info_id', 'reward_point');
+    userRewardsData.reward_type = CONSTANTS.USER_CHECK_IN.RESTAURANT_CHECK_IN;
+    userRewardsData.user_id = req.decodedData.user_id;
+
+    yield db.userRewards.create(userRewardsData);
+    return ({
+      message: 'User\'s check in into restaurant succesfully'
+    });
+  }).then((userCheckInMessage) => {
+    res.status(200)
+      .json(userCheckInMessage);
   }).catch((err) => {
     res.status(400).json({
       message: err.message
