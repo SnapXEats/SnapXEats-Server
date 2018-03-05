@@ -87,11 +87,21 @@ function insertWishListDishByUser(user_id, wishlist_dish_array) {
   return co(function* () {
     let wishlist_dish_count;
     for(wishlist_dish_count = 0; wishlist_dish_count < wishlist_dish_array.length; wishlist_dish_count++){
-      yield db.userGestures.create({
-        user_id : user_id,
-        restaurant_dish_id : wishlist_dish_array[wishlist_dish_count].restaurant_dish_id,
-        gesture_type : CONSTANTS.USER_GESTURE.WISHLIST_OF_USER
+      let userWishList = yield db.userGestures.find({
+        where : {
+          user_id : user_id,
+          restaurant_dish_id : wishlist_dish_array[wishlist_dish_count].restaurant_dish_id,
+          gesture_type : CONSTANTS.USER_GESTURE.WISHLIST_OF_USER
+        }
       });
+      
+      if(!userWishList){
+        yield db.userGestures.create({
+          user_id : user_id,
+          restaurant_dish_id : wishlist_dish_array[wishlist_dish_count].restaurant_dish_id,
+          gesture_type : CONSTANTS.USER_GESTURE.WISHLIST_OF_USER
+        });
+      }
     }
     if (wishlist_dish_count === wishlist_dish_array.length){
       return Promise.resolve({
