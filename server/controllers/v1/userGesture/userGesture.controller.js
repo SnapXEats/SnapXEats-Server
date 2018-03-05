@@ -8,6 +8,7 @@ const co = require('co');
 
 const CONSTANTS = require('./../../../../lib/constants');
 
+const _ = require('underscore');
 
 db.restaurantDish.belongsTo(db.restaurantInfo, {
   foreignKey: 'restaurant_info_id'
@@ -87,11 +88,21 @@ function insertWishListDishByUser(user_id, wishlist_dish_array) {
   return co(function* () {
     let wishlist_dish_count;
     for(wishlist_dish_count = 0; wishlist_dish_count < wishlist_dish_array.length; wishlist_dish_count++){
-      yield db.userGestures.create({
-        user_id : user_id,
-        restaurant_dish_id : wishlist_dish_array[wishlist_dish_count].restaurant_dish_id,
-        gesture_type : CONSTANTS.USER_GESTURE.WISHLIST_OF_USER
+      let userWishList = yield db.userGestures.find({
+        where : {
+          user_id : user_id,
+          restaurant_dish_id : wishlist_dish_array[wishlist_dish_count].restaurant_dish_id,
+          gesture_type : CONSTANTS.USER_GESTURE.WISHLIST_OF_USER
+        }
       });
+
+      if(!userWishList){
+        yield db.userGestures.create({
+          user_id : user_id,
+          restaurant_dish_id : wishlist_dish_array[wishlist_dish_count].restaurant_dish_id,
+          gesture_type : CONSTANTS.USER_GESTURE.WISHLIST_OF_USER
+        });
+      }
     }
     if (wishlist_dish_count === wishlist_dish_array.length){
       return Promise.resolve({
@@ -232,11 +243,13 @@ function filterUserWishListArray(userGestures) {
     let wishlist_count;
     for(wishlist_count = 0; wishlist_count < userGestures.length; wishlist_count++){
       let wishlist = userGestures[wishlist_count];
+      let user_add_array = wishlist.restaurantDish.restaurantInfo.restaurant_address.split(',');
+      let restaurant_address = user_add_array[1];
       let wishlist_object = {
         user_gesture_id : wishlist.user_gesture_id,
         restaurant_info_id : wishlist.restaurantDish.restaurant_info_id,
         restaurant_name : wishlist.restaurantDish.restaurantInfo.restaurant_name,
-        restaurant_address : wishlist.restaurantDish.restaurantInfo.restaurant_address,
+        restaurant_address : restaurant_address.trim(),
         dish_image_url : wishlist.restaurantDish.dish_image_url,
         created_at : wishlist.created_at
       };
