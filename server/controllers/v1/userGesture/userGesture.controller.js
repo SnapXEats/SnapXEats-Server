@@ -247,6 +247,7 @@ function filterUserWishListArray(userGestures) {
       let restaurant_address = user_add_array[1];
       let wishlist_object = {
         user_gesture_id : wishlist.user_gesture_id,
+        restaurant_dish_id: wishlist.restaurant_dish_id,
         restaurant_info_id : wishlist.restaurantDish.restaurant_info_id,
         restaurant_name : wishlist.restaurantDish.restaurantInfo.restaurant_name,
         restaurant_address : restaurant_address.trim(),
@@ -274,6 +275,8 @@ function filterUserWishListArray(userGestures) {
  *     type: object
  *     properties:
  *       user_gesture_id:
+ *         type: string
+ *       restaurant_dish_id:
  *         type: string
  *       restaurant_info_id:
  *         type: string
@@ -357,7 +360,8 @@ function deleteUserWishListData(userGestures) {
       let wishlist = userGestures[wishlist_count];
       yield db.userGestures.destroy({
         where : {
-          user_gesture_id : wishlist.user_gesture_id
+          restaurant_dish_id : wishlist.restaurant_dish_id,
+          gesture_type : CONSTANTS.USER_GESTURE.WISHLIST_OF_USER
         }
       });
     }
@@ -378,7 +382,7 @@ function deleteUserWishListData(userGestures) {
  *   wishList:
  *     type: object
  *     properties:
- *       user_gesture_id:
+ *       restaurant_dish_id:
  *         type: string
  */
 
