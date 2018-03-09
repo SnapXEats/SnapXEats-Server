@@ -389,23 +389,23 @@ exports.getDIshes = function (req, res) {
       let preferenceData = resolvedPromises[0];
       let userFoodPreferenceData = resolvedPromises[1];
 
-      if(preferenceData.restaurant_distance){
+      if(preferenceData && preferenceData.restaurant_distance){
         distance = preferenceData.restaurant_distance * 1610;
       }
 
-      if(preferenceData.restaurant_rating){
+      if(preferenceData && preferenceData.restaurant_rating){
         restaurant_rating = preferenceData.restaurant_rating;
       }
 
-      if(preferenceData.restaurant_price){
+      if(preferenceData && preferenceData.restaurant_price){
         restaurant_price = preferenceData.restaurant_price;
       }
 
-      if(preferenceData.sort_by_distance){
+      if(preferenceData && preferenceData.sort_by_distance){
         sort_by_distance = preferenceData.sort_by_distance;
       }
 
-      if(preferenceData.sort_by_rating){
+      if(preferenceData && preferenceData.sort_by_rating){
         sort_by_rating = preferenceData.sort_by_rating;
       }
 

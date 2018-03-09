@@ -368,20 +368,25 @@ exports.getUserPreferences = function (req, res) {
  * Update user preferences
  *
  * @param {Object} userPreferences - preferences of user
- * @param {string} userId - unique id of user
  *
  * @returns {Object} result - updated result of user preferences
  */
-function updateUserPreferences(userPreferences, userId) {
+function updateOrCreateUserPreferences(userPreferences) {
   return co(function* () {
+    let result;
     const findUserPreferences = yield db.userPreferences.find({
 			where : {
-        user_id : userId
+        user_id : userPreferences.user_id
 			},
 			attributes : ['user_preferences_id', 'restaurant_rating', 'restaurant_price',
 			'restaurant_distance', 'sort_by_distance', 'sort_by_rating']
 		});
-    const result = yield findUserPreferences.updateAttributes(userPreferences);
+
+    if(findUserPreferences){
+      result = yield findUserPreferences.updateAttributes(userPreferences);
+    } else {
+      result = yield db.userPreferences.create(userPreferences);
+    }
     return Promise.resolve({
       result
     });
@@ -599,7 +604,8 @@ exports.editUserPreferences = function (req, res) {
       userPreferences.hasOwnProperty('restaurant_distance') ||
       userPreferences.hasOwnProperty('sort_by_distance') ||
       userPreferences.hasOwnProperty('sort_by_rating')) {
-      yield updateUserPreferences(userPreferences, userId);
+      userPreferences.user_id = userId;
+      yield updateOrCreateUserPreferences(userPreferences);
     }
     if (userCuisinePreferences && userCuisinePreferences.length > 0) {
      let filteredCuisineData = yield filterCuisinePreferences(userCuisinePreferences,userId);
