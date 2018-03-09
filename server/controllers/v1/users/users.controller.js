@@ -105,33 +105,71 @@ function issueToken(id, userType) {
       });
   });
 }
+
+/**
+ * getUserWishList (Find user wishlist from db)
+ *
+ * @param {String} user_id - Unique user id for search wishlist
+ *
+ * @returns {Array} userGestures - Object (user wishlist object)
+ *
+ */
+function getUserWishList(user_id) {
+  return co(function* () {
+    let userGestures = yield db.userGestures.findAll({
+      where : {
+        user_id : user_id,
+        gesture_type : CONSTANTS.USER_GESTURE.WISHLIST_OF_USER,
+        status : CONSTANTS.DB.STATUS.ACTIVE
+      },
+      attributes : ['restaurant_dish_id']
+    });
+    return Promise.resolve(userGestures);
+  }).catch((err) => {
+    return err;
+  });
+}
+
 /**
  * @swagger
  * definition:
- *   Users:
+ *   wishList:
  *     type: object
- *     required:
- *       - name
- *       - login_type
- *       - user_type
- *       - status
  *     properties:
- *       social_id:
+ *       restaurant_dish_id :
  *         type: string
- *       name:
+ */
+
+/**
+ * @swagger
+ * definition:
+ *   user:
+ *     type: object
+ *     properties:
+ *       user_id:
  *         type: string
- *       access_token:
- *         type: string
- *       user_image_url:
+ *       token:
  *         type: string
  *       social_platform:
  *         type: string
- *       login_type:
- *         type: string
- *       user_type:
- *         type: string
- *       status:
- *         type: string
+ *       first_time_login:
+ *         type: boolean
+ *       userWishList:
+ *         type: array
+ *         items:
+ *           $ref: "#/definitions/wishList"
+
+ */
+
+/**
+ * @swagger
+ * definition:
+ *   user_signUp:
+ *     type: object
+ *     properties:
+ *       userInfo :
+ *         type: object
+ *         "$ref": "#/definitions/user"
  */
 
 /**
@@ -162,11 +200,12 @@ function issueToken(id, userType) {
  *                type: string
  *              social_id:
  *                type: string
- *              first_time_login:
- *                type: boolean
  *      responses:
  *        201:
- *          description: Created
+ *          description: "successful operation"
+ *          schema:
+ *            type: object
+ *            "$ref": "#/definitions/user_signUp"
  */
 exports.signUp = function (req, res) {
   return co(function* () {
@@ -204,11 +243,13 @@ exports.signUp = function (req, res) {
       userInformation = yield createUser(userInfo);
     }
     const token = yield issueToken(userInformation.user_id, userInformation.user_type);
+    let userWishList = yield getUserWishList(userInformation.user_id);
     return ({
       token,
       user_id : userInformation.user_id,
       social_platform : socialPlatform,
-      first_time_login : userInformation.first_time_login
+      first_time_login : userInformation.first_time_login,
+      userWishList
     });
   }).then((createdUserData) => {
     res.status(200)
