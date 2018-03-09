@@ -211,28 +211,20 @@ function getUserPreferncesFromDB(userId) {
 				where : {
           user_id : userId
 				},
-        attributes : ['user_preferences_id', 'restaurant_rating', 'restaurant_price',
+        attributes : ['restaurant_rating', 'restaurant_price',
 				'restaurant_distance', 'sort_by_distance', 'sort_by_rating']
       }),
 			db.userCuisinePreferences.findAll({
         where : {
           user_id : userId
         },
-        attributes:['user_cuisine_preferences_id', 'is_cuisine_like', 'is_cuisine_favourite'],
-        include : [{
-          model : db.cuisineInfo,
-          attributes : ['cuisine_info_id', 'cuisine_name', 'cuisine_image_url']
-        }]
+        attributes:['cuisine_info_id','is_cuisine_like', 'is_cuisine_favourite']
 			}),
       db.userFoodPreferences.findAll({
         where : {
           user_id : userId
         },
-				attributes:['user_food_preferences_id', 'is_food_like', 'is_food_favourite'],
-				include : [{
-        	model : db.foodTypeInfo,
-					attributes : ['food_type_info_id', 'food_name', 'food_image_url']
-				}]
+				attributes:['food_type_info_id', 'is_food_like', 'is_food_favourite']
       })
     	]);
     return({
@@ -249,13 +241,7 @@ function getUserPreferncesFromDB(userId) {
  *   userSelectedFoodPreferences:
  *     type: object
  *     properties:
- *       user_food_preferences_id:
- *         type: string
  *       food_type_info_id:
- *         type: string
- *       food_name:
- *         type: string
- *       food_image_url:
  *         type: string
  *       is_food_like:
  *         type: boolean
@@ -269,13 +255,7 @@ function getUserPreferncesFromDB(userId) {
  *   userSelectedCuisinePreferences:
  *     type: object
  *     properties:
- *       user_cuisine_preferences_id:
- *         type: string
  *       cuisine_info_id:
- *         type: string
- *       cuisine_name:
- *         type: string
- *       cuisine_image_url:
  *         type: string
  *       is_cuisine_like:
  *         type: boolean
@@ -289,8 +269,6 @@ function getUserPreferncesFromDB(userId) {
  *   userSetPreferences:
  *     type: object
  *     properties:
- *       user_preferences_id:
- *         type: string
  *       restaurant_rating:
  *         type: number
  *       restaurant_price:
@@ -340,25 +318,23 @@ exports.getUserPreferences = function (req, res) {
     const userId = req.decodedData.user_id;
     let userAllPreferences = yield getUserPreferncesFromDB(userId);
     let userPreferences = {
-      user_preferences_id : userAllPreferences.userPreferences.user_preferences_id,
-      restaurant_rating : userAllPreferences.userPreferences.restaurant_rating,
-      restaurant_price : userAllPreferences.userPreferences.restaurant_price,
-      restaurant_distance : userAllPreferences.userPreferences.restaurant_distance,
-      sort_by_distance : userAllPreferences.userPreferences.sort_by_distance,
-      sort_by_rating : userAllPreferences.userPreferences.sort_by_rating,
       userCuisinePreferences : [],
       userFoodPreferences : []
-		};
+    };
+    if (userAllPreferences.userPreferences) {
+      userPreferences.restaurant_rating = userAllPreferences.userPreferences.restaurant_rating;
+      userPreferences.restaurant_price = userAllPreferences.userPreferences.restaurant_price;
+      userPreferences.restaurant_distance = userAllPreferences.userPreferences.restaurant_distance;
+      userPreferences.sort_by_distance = userAllPreferences.userPreferences.sort_by_distance;
+      userPreferences.sort_by_rating = userAllPreferences.userPreferences.sort_by_rating;
+    }
 
     let cuisineCount, foodCount;
     for(cuisineCount = 0; cuisineCount < userAllPreferences.userCuisinePreferences.length;
 		cuisineCount++){
     	let cuisineInfo =  userAllPreferences.userCuisinePreferences[cuisineCount];
       userPreferences.userCuisinePreferences.push({
-        user_cuisine_preferences_id : cuisineInfo.user_cuisine_preferences_id,
-        cuisine_info_id : cuisineInfo.cuisineInfo.cuisine_info_id,
-        cuisine_name : cuisineInfo.cuisineInfo.cuisine_name,
-        cuisine_image_url : cuisineInfo.cuisineInfo.cuisine_image_url,
+        cuisine_info_id : cuisineInfo.cuisine_info_id,
         is_cuisine_like : cuisineInfo.is_cuisine_like,
         is_cuisine_favourite : cuisineInfo.is_cuisine_favourite
 
@@ -369,13 +345,9 @@ exports.getUserPreferences = function (req, res) {
         foodCount++){
       let foodTypeInfo =  userAllPreferences.userFoodPreferences[foodCount];
       userPreferences.userFoodPreferences.push({
-        user_food_preferences_id : foodTypeInfo.user_food_preferences_id,
-        food_type_info_id : foodTypeInfo.foodTypeInfo.food_type_info_id,
-        food_name : foodTypeInfo.foodTypeInfo.food_name,
-        food_image_url : foodTypeInfo.foodTypeInfo.food_image_url,
+        food_type_info_id : foodTypeInfo.food_type_info_id,
         is_food_like : foodTypeInfo.is_food_like,
         is_food_favourite : foodTypeInfo.is_food_favourite
-
       });
     }
 
