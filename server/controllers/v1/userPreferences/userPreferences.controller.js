@@ -291,6 +291,17 @@ function getUserPreferncesFromDB(userId) {
 
 /**
  * @swagger
+ * definition:
+ *   userPreferencesData:
+ *     type: object
+ *     properties:
+ *       userPreferences:
+ *         type: object
+ *         "$ref": "#/definitions/userSetPreferences"
+ */
+
+/**
+ * @swagger
  * /api/v1/userPreferences:
  *   get:
  *     summary: Get user all preferences
@@ -310,7 +321,7 @@ function getUserPreferncesFromDB(userId) {
  *         description: "successful operation"
  *         schema:
  *           type: object
- *           "$ref": "#/definitions/userSetPreferences"
+ *           "$ref": "#/definitions/userPreferencesData"
  */
 
 exports.getUserPreferences = function (req, res) {
