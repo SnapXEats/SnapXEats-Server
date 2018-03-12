@@ -18,6 +18,11 @@ const type = require('type-of-is');
 
 const _ = require('underscore');
 
+const moment = require('moment');
+require('moment-range');
+
+const CONSTANTS = require('./../../../../lib/constants');
+
 db.restaurantInfo.hasMany(db.restaurantDish, {
   foreignKey: 'restaurant_info_id'
 });
@@ -117,6 +122,100 @@ function getRestaurant(latitude, longitude, distance, sort_by_distance, googleId
 }
 
 /**
+ * stringifyYesterday (Gives date of yesterday in stringify format)
+ *
+ * @returns {String} yesterday - date of yesterday
+ *
+ */
+function stringifyYesterday() {
+  let today = moment().utc().set({'hour': 0, 'minute': 0,'second' : 0});
+  let yesterday = today.subtract(1,'days');
+  return yesterday;
+}
+
+/**
+ * checkDislikeOfDish (Check dislike dish by user and filtered out)
+ *
+ * @param {Object} restaurantDishesInfo - restaurant dishes information
+ * @param {Array}  restaurantDishes - restaurant dishes array
+ * @param {String}  userId - user unique id
+ *
+ * @returns {Object} restaurantDishesInfo - restaurant dishes information object
+ *
+ */
+function checkDislikeOfDish(restaurantDishesInfo, restaurantDishes, userId) {
+  return co(function* () {
+    let dishCount;
+    let date = stringifyYesterday();
+    let yesterday = moment(date).format("MM-DD-YYYY");
+    let today = moment().format("MM-DD-YYYY");
+    for(dishCount = 0; dishCount < restaurantDishes.length; dishCount++){
+      let userGesturesOnDishByUser = yield db.userGestures.findAll({
+        attributes : ['created_at'],
+        where : {
+          restaurant_dish_id : restaurantDishes[dishCount].restaurant_dish_id,
+          user_id : userId
+        }
+      });
+      let countOfCreationDate;
+      let flag = 0;
+
+      for(countOfCreationDate = 0; countOfCreationDate < userGesturesOnDishByUser.length ; countOfCreationDate++){
+        let dateOfDislike = moment(userGesturesOnDishByUser[countOfCreationDate].created_at).format("MM-DD-YYYY");
+        if(dateOfDislike === today || dateOfDislike === yesterday){
+          flag = 1;
+        }
+      }
+      if(flag === 0 && countOfCreationDate === userGesturesOnDishByUser.length){
+        restaurantDishesInfo.restaurantDishes.push(restaurantDishes[dishCount]);
+      }
+    }
+    if(dishCount === restaurantDishes.length){
+      return(restaurantDishesInfo);
+    }
+  });
+}
+
+/**
+ * checkUserGesturesOnDishes (Find user gestures data from db)
+ *
+ * @param {Array} restaurantData - restaurant data as an array
+ * @param {String}  userId - user unique id
+ *
+ * @returns {Array} restaurantDataAfterFilteration - restaurant filtered data
+ *
+ */
+function checkUserGesturesOnDishes(restaurantData, userId){
+  return co(function* () {
+    if(!userId){
+      return restaurantData;
+    }
+    let restaurantDataAfterFilteration = [];
+    let restaurantCount;
+
+    for(restaurantCount = 0; restaurantCount < restaurantData.length; restaurantCount++){
+      let restaurantDishesInfo = {
+        restaurant_info_id : restaurantData[restaurantCount].restaurant_info_id,
+        restaurant_name : restaurantData[restaurantCount].restaurant_name,
+        location_lat : restaurantData[restaurantCount].location_lat,
+        location_long : restaurantData[restaurantCount].location_long,
+        restaurant_price : restaurantData[restaurantCount].restaurant_price,
+        restaurant_rating : restaurantData[restaurantCount].restaurant_rating,
+        restaurantDishes : []
+      };
+      let restaurantDishes = restaurantData[restaurantCount].restaurantDishes;
+      let restaurantInformation = yield checkDislikeOfDish(restaurantDishesInfo, restaurantDishes, userId);
+      restaurantDataAfterFilteration.push(restaurantInformation);
+    }
+    if(restaurantCount === restaurantData.length){
+      return restaurantDataAfterFilteration;
+    }
+  }).catch((err) => {
+    return err;
+  });
+}
+
+/**
  * findRestaurantData (Find restaurant images and data from db)
  *
  * @param {Array} restaurantArray - google Ids array for search restaurant
@@ -145,11 +244,35 @@ function findRestaurantData(restaurantArray,restaurant_rating, restaurant_price,
             cuisine_info_id: cuisineInfoId
           }
         });
+
         const labelJson = {
-          dish_label: foodLabel.cuisine_name
+          dish_label: {
+            $like : `%${foodLabel.cuisine_name}%`
+          }
         };
         findFoodLabelArray.push(labelJson);
       }
+    }
+
+    if (foodPreferenceData && foodPreferenceData.length > 0) {
+      for (let foodCount = 0; foodCount < foodPreferenceData.length; foodCount++) {
+        let foodId = foodPreferenceData[foodCount];
+        let foodLabel = yield db.foodTypeInfo.find({
+          where: {
+            food_type_info_id: foodId
+          }
+        });
+        const labelJson = {
+          dish_label: {
+            $like : `%${foodLabel.food_name}%`
+          }
+        };
+        findFoodLabelArray.push(labelJson);
+      }
+      whereClause = {
+        $or: findFoodLabelArray
+      };
+    } else {
       whereClause = {
         $or: findFoodLabelArray
       };
@@ -368,8 +491,9 @@ exports.getDIshes = function (req, res) {
     let distance = 1610;
     let restaurant_rating, restaurant_price, sort_by_distance;
     let sort_by_rating = 0;
+    let userId;
     if(req.decodedData) {
-      let userId = req.decodedData.user_id;
+      userId = req.decodedData.user_id;
       let resolvedPromises = yield Promise.all([
         db.userPreferences.find({
         where : {
@@ -378,7 +502,7 @@ exports.getDIshes = function (req, res) {
         attributes : ['restaurant_rating', 'restaurant_price', 'restaurant_distance',
           'sort_by_distance', 'sort_by_rating']
         }),
-        db.userFoodPreferences.find({
+        db.userFoodPreferences.findAll({
           where : {
             user_id : userId
           },
@@ -462,18 +586,18 @@ exports.getDIshes = function (req, res) {
     let restaurantData =  yield findRestaurantData(data.googleIds, restaurant_rating, restaurant_price,
       foodPreferenceData, cuisineArray);
     if(!sort_by_rating){
-      return restaurantData;
-    } else {
+      restaurantData = yield checkUserGesturesOnDishes(restaurantData, userId);    } else {
       let restaurantSortedData = _.sortBy(restaurantData, function(foodObject) {
         return foodObject.restaurant_rating;
       });
-      return restaurantSortedData.reverse();
+      restaurantData = yield checkUserGesturesOnDishes(restaurantSortedData.reverse(), userId);
     }
-
+    return restaurantData;
   }).then((data) => {
     res.status(200)
       .json({ dishesInfo : data });
   }).catch((err) => {
+    console.log(err);
     res.status(400).json(err);
   });
 };
