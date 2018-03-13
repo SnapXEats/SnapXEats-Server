@@ -291,6 +291,17 @@ function getUserPreferncesFromDB(userId) {
 
 /**
  * @swagger
+ * definition:
+ *   userPreferencesData:
+ *     type: object
+ *     properties:
+ *       userPreferences:
+ *         type: object
+ *         "$ref": "#/definitions/userSetPreferences"
+ */
+
+/**
+ * @swagger
  * /api/v1/userPreferences:
  *   get:
  *     summary: Get user all preferences
@@ -310,7 +321,7 @@ function getUserPreferncesFromDB(userId) {
  *         description: "successful operation"
  *         schema:
  *           type: object
- *           "$ref": "#/definitions/userSetPreferences"
+ *           "$ref": "#/definitions/userPreferencesData"
  */
 
 exports.getUserPreferences = function (req, res) {
@@ -323,7 +334,7 @@ exports.getUserPreferences = function (req, res) {
     };
     if (userAllPreferences.userPreferences) {
       userPreferences.restaurant_rating = userAllPreferences.userPreferences.restaurant_rating;
-      userPreferences.restaurant_price = userAllPreferences.userPreferences.restaurant_price;
+      userPreferences.restaurant_price = parseInt(userAllPreferences.userPreferences.restaurant_price);
       userPreferences.restaurant_distance = userAllPreferences.userPreferences.restaurant_distance;
       userPreferences.sort_by_distance = userAllPreferences.userPreferences.sort_by_distance;
       userPreferences.sort_by_rating = userAllPreferences.userPreferences.sort_by_rating;
