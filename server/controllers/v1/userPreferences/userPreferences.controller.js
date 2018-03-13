@@ -334,7 +334,7 @@ exports.getUserPreferences = function (req, res) {
     };
     if (userAllPreferences.userPreferences) {
       userPreferences.restaurant_rating = userAllPreferences.userPreferences.restaurant_rating;
-      userPreferences.restaurant_price = userAllPreferences.userPreferences.restaurant_price;
+      userPreferences.restaurant_price = parseInt(userAllPreferences.userPreferences.restaurant_price);
       userPreferences.restaurant_distance = userAllPreferences.userPreferences.restaurant_distance;
       userPreferences.sort_by_distance = userAllPreferences.userPreferences.sort_by_distance;
       userPreferences.sort_by_rating = userAllPreferences.userPreferences.sort_by_rating;
