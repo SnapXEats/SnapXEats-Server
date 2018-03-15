@@ -597,7 +597,6 @@ exports.getDIshes = function (req, res) {
     res.status(200)
       .json({ dishesInfo : data });
   }).catch((err) => {
-    console.log(err);
     res.status(400).json(err);
   });
 };
