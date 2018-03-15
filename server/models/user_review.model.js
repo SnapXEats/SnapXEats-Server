@@ -20,12 +20,10 @@ module.exports = function (sequelize, DataTypes) {
       }
     },
     audio_review_url : {
-      type: DataTypes.TEXT,
-      allowNull: false
+      type: DataTypes.TEXT
     },
     text_review : {
-      type: DataTypes.TEXT,
-      allowNull: false
+      type: DataTypes.TEXT
     },
     rating : {
       type: DataTypes.INTEGER,
