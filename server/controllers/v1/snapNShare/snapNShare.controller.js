@@ -55,13 +55,14 @@ function addDish(restaurant_info_id, dishLink){
 }
 
 function addReview(restaurant_dish_id, audioReviewLink, textReview, restaurant_rating,
-                   restaurant_info_id){
+                   restaurant_info_id, user_id){
   return co(function* () {
     let userReview = yield db.userReview.create({
       restaurant_dish_id : restaurant_dish_id,
       audio_review_url : audioReviewLink,
       text_review : textReview,
-      rating : restaurant_rating
+      rating : restaurant_rating,
+      user_id : user_id
     });
     let restaurant_info = yield db.restaurantInfo.find({
       where : {
@@ -75,8 +76,68 @@ function addReview(restaurant_dish_id, audioReviewLink, textReview, restaurant_r
   });
 }
 
+/**
+ * @swagger
+ * definition:
+ *   snapNShare:
+ *     type: object
+ *     properties:
+ *       restaurant_name:
+ *         type: string
+ *       restaurant_dish_id:
+ *         type: string
+ *       dish_image_url:
+ *         type: string
+ */
+
+/**
+ * @swagger
+ * paths:
+ *  /api/v1/snapNShare:
+ *    post:
+ *      summary: Upload photo on aws s3.
+ *      tags:
+ *        - Snap N Share
+ *      description: Upload dish photo n audio review as a JSON object
+ *      consumes:
+ *        - application/json
+ *      parameters:
+ *        - in: header
+ *          name: Authorization
+ *          description: an authorization header (Bearer eyJhbGciOiJI...)
+ *          required: true
+ *          type: string
+ *        - in: formData
+ *          name: restaurantInfoId
+ *          description: restaurant information unique id
+ *          type: string
+ *        - in: formData
+ *          name: dishPicture
+ *          description: dish picture file to upload
+ *          required: false
+ *          type: file
+ *        - in: formData
+ *          name: audioReview
+ *          description: audio review file to upload
+ *          type: file
+ *        - in: formData
+ *          name: textReview
+ *          description: text review
+ *          type: string
+ *        - in: formData
+ *          name: rating
+ *          description: rating of restaurant
+ *          type: integer
+ *      responses:
+ *        200:
+ *          description: Successfully Created
+ *          schema:
+ *            type: object
+ *            "$ref": "#/definitions/snapNShare"
+ */
 exports.fileUploadToS3 = function (req, res) {
   return co(function* () {
+    let user_id = req.decodedData.user_id;
     let restaurant_info_id = req.body.restaurantInfoId;
     let restaurant_rating = req.body.rating;
     let textReview = req.body.textReview;
@@ -95,7 +156,7 @@ exports.fileUploadToS3 = function (req, res) {
 
       let dishInformation = yield addDish(restaurant_info_id, dishLink);
       let reviewInformation = yield addReview(dishInformation.restaurant_dish_id,
-        audioReviewLink,textReview,restaurant_rating,restaurant_info_id);
+        audioReviewLink, textReview, restaurant_rating, restaurant_info_id, user_id);
       return({
         restaurant_name : reviewInformation.restaurant_name,
         dish_image_url : dishLink,

@@ -28,6 +28,16 @@ module.exports = function (sequelize, DataTypes) {
     rating : {
       type: DataTypes.INTEGER,
       allowNull: false
+    },
+    user_id : {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references : {
+        model : 'users',
+        key : 'user_id',
+        onUpdate: 'cascade',
+        onDelete: 'cascade'
+      }
     }
   }, {
     timestamps: true,
