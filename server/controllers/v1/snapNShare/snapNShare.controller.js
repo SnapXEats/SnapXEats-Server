@@ -11,12 +11,21 @@ const fs = require('fs');
 let S3FS = require('s3fs');
 
 let s3fsImpl = new S3FS('filetoupload', {
-  accessKeyId: 'AKIAJIBHIWJNAVDWTZWQ',
-  secretAccessKey: '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',
-  signatureVersion: 'v4',
-  region: 'us-east-2'
+  accessKeyId: process.env.accessKeyId,
+  secretAccessKey: process.env.secretAccessKey,
+  signatureVersion: process.env.signatureVersion,
+  region: process.env.regionOfAWS
 });
 
+/**
+ * uploadPicture
+ *
+ * @param {String} fileName - File name to upload file
+ * @param {String}  pathOfFile - Temporary Path of file
+ *
+ * @returns {String} picLink - Link of file which is uploaded on AWS
+ *
+ */
 function uploadPicture(fileName,pathOfFile) {
   return new Promise((resolve, reject) => {
     let stream = fs.createReadStream(pathOfFile);
@@ -41,6 +50,15 @@ function uploadPicture(fileName,pathOfFile) {
   });
 }
 
+/**
+ * addDish
+ *
+ * @param {String} restaurant_info_id - Unique restaurant information id
+ * @param {String}  dishLink - Link of dish which is uploaded on AWS
+ *
+ * @returns {Object} dishInformation
+ *
+ */
 function addDish(restaurant_info_id, dishLink){
   return co(function* () {
    let dishInformation = yield db.restaurantDish.create({
@@ -54,6 +72,20 @@ function addDish(restaurant_info_id, dishLink){
   });
 }
 
+/**
+ * addReview
+ *
+ * @param {String} restaurant_dish_id - Unique dish information id
+ * @param {String}  audioReviewLink - Link of audio which is uploaded on AWS
+ * @param {String}  textReview - Text review of dish which is uploaded on AWS
+ * @param {Integer}  restaurant_rating - Rating of restaurant
+ * @param {String}  restaurant_info_id - Unique restaurant information id
+ * @param {String}  user_id - Unique User information id
+
+ *
+ * @returns {Object} restaurant_info
+ *
+ */
 function addReview(restaurant_dish_id, audioReviewLink, textReview, restaurant_rating,
                    restaurant_info_id, user_id){
   return co(function* () {
