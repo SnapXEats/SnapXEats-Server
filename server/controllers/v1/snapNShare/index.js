@@ -7,6 +7,6 @@ let multiparty = require('connect-multiparty');
 let multipartyMiddleware = multiparty();
 
 router.use(multipartyMiddleware);
-router.post('/uploadFile', controller.fileUploadToS3);
+router.post('/', auth.isAuthenticated(), controller.fileUploadToS3);
 
 module.exports = router;
