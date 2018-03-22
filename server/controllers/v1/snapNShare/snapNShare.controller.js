@@ -10,12 +10,49 @@ const fs = require('fs');
 
 let S3FS = require('s3fs');
 
+const util = require('util');
+
+const CONSTANTS = require('./../../../../lib/constants');
+
+let vision = require('@google-cloud/vision');
+const client = new vision.v1.ImageAnnotatorClient();
+
 let s3fsImpl = new S3FS('filetoupload', {
   accessKeyId: process.env.accessKeyId,
   secretAccessKey: process.env.secretAccessKey,
   signatureVersion: process.env.signatureVersion,
   region: process.env.regionOfAWS
 });
+
+function getLabelOfImages(photoAddr) {
+  const requestPicture = {
+    image: {source: {imageUri: photoAddr}},
+    features: [{
+      type : 'LABEL_DETECTION',
+      maxResults : 100
+    }]
+  };
+  return new Promise((resolve,reject)=> {
+    client
+      .annotateImage(requestPicture)
+      .then(labelresults => {
+        const labels = labelresults[0].labelAnnotations;
+        let description = [];
+        let label;
+        let count = 0;
+        for(label = 0; label < labels.length; label++){
+          description.push(labels[label].description);
+        }
+        if(label === labels.length){
+          resolve(description);
+        }
+      })
+      .catch(err => {
+        console.error(err);
+      });
+  });
+
+}
 
 /**
  * uploadPicture
@@ -109,6 +146,34 @@ function addReview(restaurant_dish_id, audioReviewLink, textReview, restaurant_r
 }
 
 /**
+ * insertLabels
+ *
+ * @param {String} restaurant_dish_id - Unique dish information id
+ * @param {Array}  label_of_dish - Labels of dish in array
+ *
+ * @returns {String} message
+ *
+ */
+function insertLabels(label_of_dish,restaurant_dish_id){
+  return co(function* () {
+    let count;
+    for(count = 0; count<label_of_dish.length; count++){
+      let dish_label_info = {
+        restaurant_dish_id : restaurant_dish_id,
+        dish_label : label_of_dish[count]
+      };
+
+      yield db.restaurantDishLabel.create(dish_label_info);
+    }
+
+    if(count === label_of_dish.length){
+      return Promise.resolve("Labels of dish inserted successfully");
+    }
+  }).catch((err) => {
+    return err;
+  });
+}
+/**
  * @swagger
  * definition:
  *   snapNShare:
@@ -119,6 +184,8 @@ function addReview(restaurant_dish_id, audioReviewLink, textReview, restaurant_r
  *       restaurant_dish_id:
  *         type: string
  *       dish_image_url:
+ *         type: string
+ *       message:
  *         type: string
  */
 
@@ -189,18 +256,35 @@ exports.fileUploadToS3 = function (req, res) {
       let dishInformation = yield addDish(restaurant_info_id, dishLink);
       let reviewInformation = yield addReview(dishInformation.restaurant_dish_id,
         audioReviewLink, textReview, restaurant_rating, restaurant_info_id, user_id);
+       let label_of_dish = yield getLabelOfImages(dishLink);
+      if(label_of_dish && label_of_dish.length > 0){
+        yield insertLabels(label_of_dish,dishInformation.restaurant_dish_id);
+      }
+
+      let userInfo = yield db.users.find({
+        where : {
+          user_id : user_id
+        },
+        attributes: ['name']
+      });
+
+      let link = `http://ec2-user@ec2-18-216-193-78.us-east-2.compute.amazonaws.com:3000/api/v1/dishes/${dishInformation.restaurant_dish_id}`;
+
+      let message = util.format(CONSTANTS.MESSAGE_FOR_SNAPNSHARE,userInfo.name,
+        reviewInformation.restaurant_name,link);
       return({
         restaurant_name : reviewInformation.restaurant_name,
         dish_image_url : dishLink,
-        restaurant_dish_id : dishInformation.restaurant_dish_id
+        restaurant_dish_id : dishInformation.restaurant_dish_id,
+        message : message
       });
     } else {
       throw new Error('Some parameter is missing in request');
     }
 
   }).then((data) => {
-    res.status(200)
-      .json(data);
+      res.status(200)
+        .json(data);
   }).catch((err) => {
     res.status(400).json(err);
   });
