@@ -10,6 +10,7 @@
     "node": ">=6.x"
   },
   "dependencies": {
+    "@google-cloud/vision": "^0.16.0",
     "JSONStream": "^1.1.1",
     "app-root-path": "^2.0.1",
     "array-unique": "^0.3.2",
@@ -45,6 +46,7 @@
     "type-of-is": "^3.5.1",
     "umzug": "^2.1.0",
     "underscore": "^1.8.3",
+    "util": "^0.10.3",
     "walk-sync": "^0.3.2",
     "winston": "^2.4.0",
     "winston-daily-rotate-file": "^1.7.2"
