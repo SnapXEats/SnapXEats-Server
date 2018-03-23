@@ -408,8 +408,9 @@ exports.getRestaurantDetails = function (req, res) {
  *            properties:
  *              restaurant_info_id:
  *                type: string
- *              reward_point:
- *                type: integer
+ *              reward_type:
+ *                type: string
+ *                example: restaurant_check_in
  *      produces:
  *       - application/json
  *      responses:
@@ -420,18 +421,27 @@ exports.getRestaurantDetails = function (req, res) {
  *            properties:
  *              message:
  *                type: string
+ *              reward_point:
+ *                type: integer
  */
 
 exports.userCheckIn = function (req, res) {
   return co(function* () {
-    let userRewardsData = _.pick(req.body,'restaurant_info_id', 'reward_point');
-    userRewardsData.reward_type = CONSTANTS.USER_CHECK_IN.RESTAURANT_CHECK_IN;
+    let userRewardsData = _.pick(req.body,'restaurant_info_id', 'reward_type');
     userRewardsData.user_id = req.decodedData.user_id;
 
-    yield db.userRewards.create(userRewardsData);
-    return ({
-      message: 'User\'s check in into restaurant succesfully'
-    });
+    if(userRewardsData.reward_type = CONSTANTS.USER_CHECK_IN.RESTAURANT_CHECK_IN &&
+        userRewardsData.restaurant_info_id){
+      userRewardsData.reward_point = CONSTANTS.USER_CHECK_IN.REWARD_POINT_CHECK_IN;
+      yield db.userRewards.create(userRewardsData);
+      return ({
+        message: 'User\'s check in into restaurant succesfully',
+        reward_point : CONSTANTS.USER_CHECK_IN.REWARD_POINT_CHECK_IN
+      });
+    } else {
+      throw new Error('Some data is missing');
+    }
+
   }).then((userCheckInMessage) => {
     res.status(200)
       .json(userCheckInMessage);
