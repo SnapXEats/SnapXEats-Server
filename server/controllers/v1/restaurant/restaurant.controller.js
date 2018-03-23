@@ -21,6 +21,11 @@ db.restaurantInfo.hasMany(db.restaurantTiming, {
 db.restaurantInfo.hasMany(db.restaurantAminities, {
   foreignKey: 'restaurant_info_id'
 });
+
+String.prototype.capitalize = function() {
+  return this.charAt(0).toUpperCase() + this.slice(1);
+}
+
 /**
  * Get near by places result
  *
@@ -243,7 +248,7 @@ exports.getRestaurantInforamtion = function (req, res) {
 
     for(amenityCount = 0 ; amenityCount < amenities.length; amenityCount++){
       restaurantAmenities.push(
-        amenities[amenityCount].aminity_name
+        amenities[amenityCount].aminity_name.capitalize()
       );
     }
 
@@ -353,7 +358,7 @@ exports.getRestaurantDetails = function (req, res) {
 
     for(aminityCount = 0 ; aminityCount < aminities.length; aminityCount++){
       restaurantAminities.push(
-      	aminities[aminityCount].aminity_name
+      	aminities[aminityCount].aminity_name.capitalize()
         );
     }
     let address_url = 'https://maps.googleapis.com/maps/api/place/details/json?placeid=' +
