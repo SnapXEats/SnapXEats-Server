@@ -31,6 +31,9 @@ db.restaurantDish.hasMany(db.restaurantDishLabel, {
   foreignKey: 'restaurant_dish_id'
 });
 
+db.restaurantDish.hasOne(db.userReview, {
+  foreignKey: 'restaurant_dish_id'
+});
 /**
  * Get near by places result
  *
@@ -597,6 +600,104 @@ exports.getDIshes = function (req, res) {
     res.status(200)
       .json({ dishesInfo : data });
   }).catch((err) => {
+    res.status(400).json(err);
+  });
+};
+
+/**
+ * @swagger
+ * definition:
+ *   dishDetails:
+ *     type: object
+ *     properties:
+ *       restaurant_dish_id:
+ *         type: string
+ *       restaurant_name:
+ *         type: string
+ *       restaurant_address:
+ *         type: string
+ *       dish_image_url:
+ *         type: string
+ *       pic_taken_date:
+ *         type: string
+ *       audio_review_url:
+ *         type: string
+ *       text_review:
+ *         type: string
+ *       restaurant_amenities:
+ *          type: array
+ *          items:
+ *            type: string
+ */
+
+/**
+ * @swagger
+ * /api/v1/dishes/{restaurant_dish_id}:
+ *   get:
+ *     summary: Get information of smart photo
+ *     description: Get information of smart photo as an JSON Object
+ *     tags:
+ *       - Dishes
+ *     parameters:
+ *      - in: path
+ *        name: restaurant_dish_id
+ *        schema:
+ *          type: string
+ *        description: restaurant's dish ID for download smart photo
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: "successful operation"
+ *         schema:
+ *           type: object
+ *           "$ref": "#/definitions/dishDetails"
+ */
+exports.getSmartPic = function (req, res) {
+  return co(function* () {
+    const restaurant_dish_id = req.params.restaurant_dish_id;
+    let amenityCount, restaurantAmenities = [];
+    let dishInformation = yield db.restaurantDish.find({
+      where : {
+        restaurant_dish_id : restaurant_dish_id
+      },
+      attributes : ['restaurant_dish_id', 'restaurant_info_id', 'dish_image_url', 'created_at'],
+      include : [{
+        model : db.userReview,
+        attributes : ['audio_review_url', 'text_review']
+      },{
+        model : db.restaurantInfo,
+        attributes: ['restaurant_name', 'restaurant_address'],
+        include: [{
+          model : db.restaurantAminities,
+          attributes : ['aminity_name']
+        }]
+      }]
+    });
+
+    let amenities = dishInformation.restaurantInfo.restaurantAminities;
+
+    for(amenityCount = 0 ; amenityCount < amenities.length; amenityCount++){
+      restaurantAmenities.push(
+        amenities[amenityCount].aminity_name.capitalize()
+      );
+    }
+
+    return ({
+      restaurant_dish_id: dishInformation.restaurant_dish_id,
+      restaurant_name : dishInformation.restaurantInfo.restaurant_name,
+      restaurant_address : dishInformation.restaurantInfo.restaurant_address,
+      restaurant_aminities : restaurantAmenities,
+      dish_image_url : dishInformation.dish_image_url,
+      pic_taken_date : dishInformation.created_at,
+      audio_review_url : dishInformation.userReview.audio_review_url || '',
+      text_review : dishInformation.userReview.text_review || ''
+    });
+  }).then((data) => {
+    res.status(200)
+      .json(data);
+  }).catch((err) => {
+    console.log(err);
     res.status(400).json(err);
   });
 };
