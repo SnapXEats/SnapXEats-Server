@@ -640,11 +640,6 @@ function findRestaurantData(restaurantArray) {
  *     summary: Get near by restaurants for check-in
  *     description: List all near by restaurants for check-in as an JSON array
  *     parameters:
- *      - in: header
- *        name: Authorization
- *        description: an authorization header (Bearer eyJhbGciOiJI...)
- *        type: string
- *        required: true
  *      - in: query
  *        name: latitude
  *        schema:
