@@ -210,10 +210,11 @@ function insertLabels(label_of_dish,restaurant_dish_id){
  *          name: restaurantInfoId
  *          description: restaurant information unique id
  *          type: string
+ *          required: true
  *        - in: formData
  *          name: dishPicture
  *          description: dish picture file to upload
- *          required: false
+ *          required: true
  *          type: file
  *        - in: formData
  *          name: audioReview
@@ -227,6 +228,7 @@ function insertLabels(label_of_dish,restaurant_dish_id){
  *          name: rating
  *          description: rating of restaurant
  *          type: integer
+ *          required: true
  *      responses:
  *        200:
  *          description: Successfully Created
@@ -242,7 +244,7 @@ exports.fileUploadToS3 = function (req, res) {
     let textReview = req.body.textReview;
     let dishPic = req.files.dishPicture;
     let audioReview = req.files.audioReview;
-    if(restaurant_info_id && restaurant_rating && dishPic && (audioReview || textReview)){
+    if(restaurant_info_id && restaurant_rating && dishPic){
       let dishFileName, dishLink, audioFileName, audioReviewLink;
       if(dishPic){
         dishFileName = dishPic.path.split("/tmp/");
