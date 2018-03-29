@@ -398,6 +398,16 @@ exports.getRestaurantDetails = function (req, res) {
 
 /**
  * @swagger
+ * definition:
+ *   dishInformationForShare:
+ *     type: object
+ *     properties:
+ *       restaurant_dish_id:
+ *         type: string
+ */
+
+/**
+ * @swagger
  * paths:
  *  /api/v1/restaurant/checkIn:
  *    post:
@@ -423,7 +433,11 @@ exports.getRestaurantDetails = function (req, res) {
  *                type: string
  *              reward_type:
  *                type: string
- *                example: restaurant_check_in
+ *                example: restaurant_check_in,snap_and_share
+ *              restaurantDishes:
+ *                type: array
+ *                items:
+ *                  "$ref": "#/definitions/dishInformationForShare"
  *      produces:
  *       - application/json
  *      responses:
@@ -441,16 +455,33 @@ exports.getRestaurantDetails = function (req, res) {
 exports.userCheckIn = function (req, res) {
   return co(function* () {
     let userRewardsData = _.pick(req.body,'restaurant_info_id', 'reward_type');
+    let restaurantDishes = req.body.restaurantDishes;
     userRewardsData.user_id = req.decodedData.user_id;
 
-    if(userRewardsData.reward_type = CONSTANTS.USER_CHECK_IN.RESTAURANT_CHECK_IN &&
+    if(userRewardsData.reward_type = CONSTANTS.USER_REWARDS.RESTAURANT_CHECK_IN &&
         userRewardsData.restaurant_info_id){
-      userRewardsData.reward_point = CONSTANTS.USER_CHECK_IN.REWARD_POINT_CHECK_IN;
+      userRewardsData.reward_point = CONSTANTS.USER_REWARDS.REWARD_POINT_CHECK_IN;
       yield db.userRewards.create(userRewardsData);
       return ({
         message: 'User\'s check in into restaurant succesfully',
-        reward_point : CONSTANTS.USER_CHECK_IN.REWARD_POINT_CHECK_IN
+        reward_point : CONSTANTS.USER_REWARDS.REWARD_POINT_CHECK_IN
       });
+    } else if(userRewardsData.reward_type = CONSTANTS.USER_REWARDS.SNAP_AND_SHARE &&
+        userRewardsData.restaurant_info_id && restaurantDishes.length > 0) {
+      let rewardData = yield db.userRewards.create(userRewardsData);
+      let dishCount;
+      for(dishCount = 0; dishCount < restaurantDishes.length; dishCount++){
+        let user_reward_dish_data = restaurantDishes[dishCount];
+        user_reward_dish_data.user_reward_id = rewardData.user_reward_id;
+        yield db.userRewardDish.create(user_reward_dish_data);
+      }
+
+      if(dishCount === restaurantDishes.length){
+        return ({
+          message: 'User has succesfully share image on social platform',
+          reward_point : CONSTANTS.USER_REWARDS.REWARD_POINT_FOR_SHARE
+        });
+      }
     } else {
       throw new Error('Some data is missing');
     }
