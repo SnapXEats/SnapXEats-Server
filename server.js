@@ -136,9 +136,10 @@ db.sequelize.sync({ force : config.db.wipe })
 
 // body parser
 app.use(bodyParser.urlencoded({
-  extended : false
+  extended : true,
+  limit: '50mb'
 }));
-app.use(bodyParser.json());
+app.use(bodyParser.json({limit: '50mb'}));
 // load API routes
 require('./server/routes')(app);
 
