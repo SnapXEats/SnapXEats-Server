@@ -154,6 +154,8 @@ function getUserWishList(user_id) {
  *         type: string
  *       first_time_login:
  *         type: boolean
+ *       userRewardPoint:
+ *         type: integer
  *       userWishList:
  *         type: array
  *         items:
@@ -244,12 +246,20 @@ exports.signUp = function (req, res) {
     }
     const token = yield issueToken(userInformation.user_id, userInformation.user_type);
     let userWishList = yield getUserWishList(userInformation.user_id);
+
+    let userRewardPoint = yield db.userRewards.sum('reward_point',{
+      where : {
+        user_id : userInformation.user_id
+      }
+    });
+
     return ({
       token,
       user_id : userInformation.user_id,
       social_platform : socialPlatform,
       first_time_login : userInformation.first_time_login,
-      userWishList
+      userWishList,
+      userRewardPoint : userRewardPoint || 0
     });
   }).then((createdUserData) => {
     res.status(200)

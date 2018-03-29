@@ -458,15 +458,15 @@ exports.userCheckIn = function (req, res) {
     let restaurantDishes = req.body.restaurantDishes;
     userRewardsData.user_id = req.decodedData.user_id;
 
-    if(userRewardsData.reward_type = CONSTANTS.USER_REWARDS.RESTAURANT_CHECK_IN &&
+    if(userRewardsData.reward_type === CONSTANTS.USER_REWARDS.RESTAURANT_CHECK_IN &&
         userRewardsData.restaurant_info_id){
-      userRewardsData.reward_point = CONSTANTS.USER_REWARDS.REWARD_POINT_CHECK_IN;
+      userRewardsData.reward_point = CONSTANTS.USER_REWARDS.REWARD_POINT_FOR_CHECK_IN;
       yield db.userRewards.create(userRewardsData);
       return ({
         message: 'User\'s check in into restaurant succesfully',
-        reward_point : CONSTANTS.USER_REWARDS.REWARD_POINT_CHECK_IN
+        reward_point : CONSTANTS.USER_REWARDS.REWARD_POINT_FOR_CHECK_IN
       });
-    } else if(userRewardsData.reward_type = CONSTANTS.USER_REWARDS.SNAP_AND_SHARE &&
+    } else if(userRewardsData.reward_type === CONSTANTS.USER_REWARDS.SNAP_AND_SHARE &&
         userRewardsData.restaurant_info_id && restaurantDishes.length > 0) {
       let rewardData = yield db.userRewards.create(userRewardsData);
       let dishCount;
