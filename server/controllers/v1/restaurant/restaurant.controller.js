@@ -468,6 +468,7 @@ exports.userCheckIn = function (req, res) {
       });
     } else if(userRewardsData.reward_type === CONSTANTS.USER_REWARDS.SNAP_AND_SHARE &&
         userRewardsData.restaurant_info_id && restaurantDishes.length > 0) {
+      userRewardsData.reward_point = CONSTANTS.USER_REWARDS.REWARD_POINT_FOR_SHARE;
       let rewardData = yield db.userRewards.create(userRewardsData);
       let dishCount;
       for(dishCount = 0; dishCount < restaurantDishes.length; dishCount++){
