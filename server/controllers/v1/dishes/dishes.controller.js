@@ -701,3 +701,62 @@ exports.getSmartPic = function (req, res) {
     res.status(400).json(err);
   });
 };
+
+/**
+ * @swagger
+ * paths:
+ *  /api/v1/dishes:
+ *    post:
+ *      summary: insert user downloaded smart picture.
+ *      tags:
+ *        - Dishes
+ *      description: insert user downloaded smart picture as a JSON object
+ *      consumes:
+ *        - application/json
+ *      parameters:
+ *        - in: header
+ *          name: Authorization
+ *          description: an authorization header (Bearer eyJhbGciOiJI...)
+ *          required: true
+ *          type: string
+ *        - in: body
+ *          name: user dish
+ *          description: insert user downloaded smart picture.
+ *          schema:
+ *            type: object
+ *            properties:
+ *              restaurant_dish_id:
+ *                type: string
+ *                required : true
+ *      responses:
+ *        200:
+ *          description: "successful operation"
+ *          schema:
+ *            type: object
+ *            properties:
+ *              message:
+ *                type: string
+ *              user_smart_pic_id:
+ *                type: string
+ */
+exports.restaurantDishOfUser = function (req, res) {
+  return co(function* () {
+    let restaurant_dish_id = req.body.restaurant_dish_id;
+    let user_id = req.decodedData.user_id;
+    let userSmartPhoto = yield db.userSmartPics.create({
+      user_id : user_id,
+      restaurant_dish_id : restaurant_dish_id
+    });
+
+    return ({
+      'message' : 'User downloaded smart picture successfully saved.',
+      user_smart_pic_id : userSmartPhoto.user_smart_pic_id
+      });
+  }).then((data) => {
+    res.status(200)
+      .json(data);
+  }).catch((err) => {
+    console.log(err);
+    res.status(400).json(err);
+  });
+};
