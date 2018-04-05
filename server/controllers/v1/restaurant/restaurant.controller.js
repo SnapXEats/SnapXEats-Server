@@ -92,7 +92,7 @@ function getRestaurantDetails(restaurantInfoId) {
 					model : db.restaurantDishLabel,
 					where : {
             dish_label: {
-              $ne: 'place'
+              $like : '%dish%'
             }
 					}
 				}]
@@ -119,6 +119,7 @@ function findRestaurantPics(restaurantInfoId) {
 			where : {
         restaurant_info_id : restaurantInfoId
 			},
+      limit : 5,
       attributes: ['dish_image_url','created_at'],
       order : [
         [db.restaurantDishLabel,'dish_label', 'ASC']
