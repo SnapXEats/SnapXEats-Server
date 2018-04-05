@@ -22,6 +22,12 @@ db.userRewardDish.belongsTo(db.restaurantDish, {
   foreignKey: 'restaurant_dish_id'
 });
 
+/**
+ * collectionUnion (For merging two array)
+ *
+ * @returns {Array} Gives Unique Array
+ *
+ */
 function collectionUnion() {
   let args = Array.prototype.slice.call(arguments);
   let it = args.pop();
@@ -62,6 +68,15 @@ function getLastWeekOfDates(){
   });
 }
 
+/**
+ * findUserRewards (Find users rewards for past and current week)
+ * @param {Array} week - Dates of current week
+ * @param {Array} userId - Unique id of user
+ *
+ *
+ * @returns {ArrayOfObject} rewardHistory(Contains history of user rewards)
+ *
+ */
 function findUserRewards(week, userId){
   return co(function* () {
     let count;
@@ -141,6 +156,15 @@ function findUserRewards(week, userId){
   });
 }
 
+
+/**
+ * isBothRewardFromSameRestaurant (Check both rewarded restaurant is same or not)
+ * @param {Array} reward - Rewards data of user
+ *
+ *
+ * @returns {Array} uniqueRewards(Returns unique rewards)
+ *
+ */
 function isBothRewardFromSameRestaurant(reward){
   return co(function* () {
     let count;
@@ -160,9 +184,7 @@ function isBothRewardFromSameRestaurant(reward){
         });
 
         let filteredResult = _.pluck(result, 'restaurantDish');
-        let finalResult = _.pluck(filteredResult, 'dish_image_url');
-
-        uniqueRewards[index].reward_dishes = finalResult;
+        uniqueRewards[index].reward_dishes = _.pluck(filteredResult, 'dish_image_url');
       }
     }
 
@@ -173,7 +195,14 @@ function isBothRewardFromSameRestaurant(reward){
     return err;
   });
 }
-
+/**
+ * filterUserRewardHistoryForLastWeek (Filtered awards)
+ * @param {Array} rewardHistory - Rewards data of user
+ *
+ *
+ * @returns {Array} FilteredRewards(Returns rewards record)
+ *
+ */
 function filterUserRewardHistoryForLastWeek(rewardHistory){
   return co(function* () {
     let count;
@@ -185,12 +214,14 @@ function filterUserRewardHistoryForLastWeek(rewardHistory){
         let foodUniqueHistory = yield isBothRewardFromSameRestaurant(reward);
         for(let countForUniqueHistory = 0; countForUniqueHistory<foodUniqueHistory.length; countForUniqueHistory++){
           let rewardDate = moment(foodUniqueHistory[countForUniqueHistory].created_at).format('YYYY-MM-DD');
+          let user_add_array = foodUniqueHistory[countForUniqueHistory].restaurantInfo.restaurant_address.split(',');
+          let restaurant_address = user_add_array[1];
           let jsonForFoodJourney = {
             restaurant_info_id : foodUniqueHistory[countForUniqueHistory].restaurant_info_id,
             reward_point : foodUniqueHistory[countForUniqueHistory].reward_point,
             restaurant_name : foodUniqueHistory[countForUniqueHistory].restaurantInfo.restaurant_name,
             restaurant_image_url : foodUniqueHistory[countForUniqueHistory].restaurantInfo.restaurantDishes[0].dish_image_url,
-            restaurant_address : foodUniqueHistory[countForUniqueHistory].restaurantInfo.restaurant_address,
+            restaurant_address : restaurant_address.trim(),
             reward_dishes : foodUniqueHistory[countForUniqueHistory].reward_dishes || []
           };
           if(today === rewardDate){
@@ -202,11 +233,13 @@ function filterUserRewardHistoryForLastWeek(rewardHistory){
         }
       } else {
         let rewardDate = moment(reward[0].created_at).format('YYYY-MM-DD');
+        let user_add_array = reward[0].restaurantInfo.restaurant_address.split(',');
+        let restaurant_address = user_add_array[1];
         let jsonForFoodJourney = {
           restaurant_info_id : reward[0].restaurant_info_id,
           reward_point : reward[0].reward_point,
           restaurant_name : reward[0].restaurantInfo.restaurant_name,
-          restaurant_address : reward[0].restaurantInfo.restaurant_address,
+          restaurant_address : restaurant_address.trim(),
           reward_dishes : reward[0].userRewardDishes,
           restaurant_image_url : reward[0].restaurantInfo.restaurantDishes[0].dish_image_url
         };
@@ -227,17 +260,27 @@ function filterUserRewardHistoryForLastWeek(rewardHistory){
   });
 }
 
+/**
+ * formattedUserPastFoodHistory (Return Formatted awards)
+ * @param {Array} rewardHistory - Rewards data of user
+ *
+ *
+ * @returns {Array} FormattedRewards(Returns rewards record)
+ *
+ */
 function formattedUserPastFoodHistory(rewardHistory){
   return co(function* () {
     let count;
     let rewardHistoryForPast = [];
     for(count = 0; count < rewardHistory.length; count++){
       let reward = rewardHistory[count];
+      let user_add_array = reward.restaurantInfo.restaurant_address.split(',');
+      let restaurant_address = user_add_array[1];
       let jsonForFoodJourney = {
         restaurant_info_id : reward.restaurant_info_id,
         reward_point : reward.reward_point,
         restaurant_name : reward.restaurantInfo.restaurant_name,
-        restaurant_address : reward.restaurantInfo.restaurant_address,
+        restaurant_address : restaurant_address.trim(),
         formattedDate : moment(reward.created_at).format("DD-MM-YYYY"),
         restaurant_image_url : reward.restaurantInfo.restaurantDishes[0].dish_image_url
       };
@@ -252,6 +295,14 @@ function formattedUserPastFoodHistory(rewardHistory){
   });
 }
 
+/**
+ * filterUserRewardHistoryForPast (Return Filtered awards)
+ * @param {Array} rewardHistory - Rewards data of user
+ *
+ *
+ * @returns {Array} FilteredRewards(Returns rewards record)
+ *
+ */
 function filterUserRewardHistoryForPast(rewardHistory){
   return co(function* () {
     let count;
@@ -285,6 +336,90 @@ function filterUserRewardHistoryForPast(rewardHistory){
     return err;
   });
 }
+
+/**
+ * @swagger
+ * definition:
+ *   currentWeekHistory:
+ *     type: object
+ *     properties:
+ *       restaurant_info_id:
+ *         type: string
+ *       restaurant_name:
+ *         type: string
+ *       reward_point:
+ *         type: integer
+ *       restaurant_image_url:
+ *         type: string
+ *       restaurant_address:
+ *         type: string
+ *       reward_dishes:
+ *         type: array
+ *         items:
+ *           type: string
+ *       formattedDate:
+ *         type: string
+ */
+
+/**
+ * @swagger
+ * definition:
+ *   userPastHistory:
+ *     type: object
+ *     properties:
+ *       restaurant_info_id:
+ *         type: string
+ *       restaurant_name:
+ *         type: string
+ *       reward_point:
+ *         type: integer
+ *       restaurant_image_url:
+ *         type: string
+ *       restaurant_address:
+ *         type: string
+ *       formattedDate:
+ *         type: string
+ */
+
+/**
+ * @swagger
+ * definition:
+ *   userFoodJourney:
+ *     type: object
+ *     properties:
+ *       userCurrentWeekHistory:
+ *         type: array
+ *         items:
+ *           $ref: "#/definitions/currentWeekHistory"
+ *       userPastHistory:
+ *         type: array
+ *         items:
+ *           $ref: "#/definitions/userPastHistory"
+ */
+
+/**
+ * @swagger
+ * /api/v1/foodJourney:
+ *   get:
+ *     summary: List out food journey of user
+ *     description: List out food journey of user as an JSON array
+ *     parameters:
+ *      - in: header
+ *        name: Authorization
+ *        description: an authorization header (Bearer eyJhbGciOiJI...)
+ *        type: string
+ *        required : true
+ *     tags:
+ *       - FoodJourney
+ *     produces:
+ *       - application/json
+ *     responses:
+ *       200:
+ *         description: "successful operation"
+ *         schema:
+ *           type: object
+ *           "$ref": "#/definitions/userFoodJourney"
+ */
 exports.getFoodJourney = function (req, res) {
   return co(function* () {
     let userId = req.decodedData.user_id;
@@ -299,9 +434,12 @@ exports.getFoodJourney = function (req, res) {
       userPastHistory
     };
 
-  }).then((data) => {
+  }).then((foodJourneydata) => {
     res.status(200)
-      .json({ userFoodJourney : data });
+      .json({
+        userCurrentWeekHistory : foodJourneydata.userCurrentWeekHistory,
+        userPastHistory : foodJourneydata.userPastHistory
+      });
   }).catch((err) => {
     console.log(err);
     res.status(400).json(err);
