@@ -7,5 +7,6 @@ const auth = require('./../../../../lib/auth');
 router.get('/', auth.isAuthenticatedOrNot(), controller.getDIshes);
 router.get('/:restaurant_dish_id', controller.getSmartPic);
 router.post('/', auth.isAuthenticated(), controller.restaurantDishOfUser);
+router.get('/user/smartPhotos', auth.isAuthenticated(), controller.getDishesOfUser);
 
 module.exports = router;

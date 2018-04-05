@@ -34,6 +34,11 @@ db.restaurantDish.hasMany(db.restaurantDishLabel, {
 db.restaurantDish.hasOne(db.userReview, {
   foreignKey: 'restaurant_dish_id'
 });
+
+db.userSmartPics.belongsTo(db.restaurantDish, {
+  foreignKey: 'restaurant_dish_id'
+});
+
 /**
  * Get near by places result
  *
@@ -752,6 +757,112 @@ exports.restaurantDishOfUser = function (req, res) {
       'message' : 'User downloaded smart picture successfully saved.',
       user_smart_pic_id : userSmartPhoto.user_smart_pic_id
       });
+  }).then((data) => {
+    res.status(200)
+      .json(data);
+  }).catch((err) => {
+    console.log(err);
+    res.status(400).json(err);
+  });
+};
+
+function getUsersSmartPhoto(user_id){
+  return co(function* () {
+    let smartPicCount;
+    let userSmartPhotos = [];
+    let userAllSmartPhotos = yield db.userSmartPics.findAll({
+      where : {
+        user_id : user_id
+      },
+      attributes : ['restaurant_dish_id', 'created_at'],
+      order: [
+        ['created_at', 'DESC']
+      ],
+      include : [{
+        model : db.restaurantDish,
+        attributes : ['dish_image_url','restaurant_info_id'],
+        include : [{
+          model : db.restaurantInfo,
+          attributes : ['restaurant_name']
+        }]
+      }]
+    });
+    for(smartPicCount = 0; smartPicCount < userAllSmartPhotos.length; smartPicCount++){
+      let smartPicsInfo = {
+        restaurant_dish_id : userAllSmartPhotos[smartPicCount].restaurant_dish_id,
+        dish_image_url : userAllSmartPhotos[smartPicCount].restaurantDish.dish_image_url,
+        restaurant_name : userAllSmartPhotos[smartPicCount].restaurantDish.restaurantInfo.restaurant_name
+      };
+      userSmartPhotos.push(smartPicsInfo);
+    }
+    if(smartPicCount === userAllSmartPhotos.length){
+      return userSmartPhotos;
+    }
+  }).catch((err) => {
+    return err;
+  });
+}
+
+/**
+ * @swagger
+ * definition:
+ *   smartPhotoInfo:
+ *     type: object
+ *     properties:
+ *       restaurant_dish_id:
+ *         type: string
+ *       dish_image_url:
+ *         type: string
+ *       restaurant_name:
+ *         type: string
+ */
+
+/**
+ * @swagger
+ * definition:
+ *   user_smart_photo:
+ *     type: object
+ *     properties:
+ *       usersSmartPhotos:
+ *         type: array
+ *         items:
+ *           $ref: "#/definitions/smartPhotoInfo"
+ */
+
+/**
+ * @swagger
+ * paths:
+ *  /api/v1/dishes/user/smartPhotos:
+ *    get:
+ *      summary: Get user's all downloaded smart photos.
+ *      tags:
+ *        - Dishes
+ *      description: Get user's all downloaded smart photos as a JSON array
+ *      consumes:
+ *        - application/json
+ *      parameters:
+ *        - in: header
+ *          name: Authorization
+ *          description: an authorization header (Bearer eyJhbGciOiJI...)
+ *          required: true
+ *          type: string
+ *      produces:
+ *       - application/json
+ *      responses:
+ *        200:
+ *          description: "successful operation"
+ *          schema:
+ *            type: object
+ *            "$ref": "#/definitions/user_smart_photo"
+ */
+exports.getDishesOfUser = function (req, res) {
+  return co(function* () {
+    let user_id = req.decodedData.user_id;
+    let usersSmartPhotos = yield getUsersSmartPhoto(user_id);
+
+    return ({
+      usersSmartPhotos
+    });
   }).then((data) => {
     res.status(200)
       .json(data);
