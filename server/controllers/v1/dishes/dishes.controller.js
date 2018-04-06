@@ -155,8 +155,9 @@ function checkDislikeOfDish(restaurantDishesInfo, restaurantDishes, userId) {
   return co(function* () {
     let dishCount;
     let date = stringifyYesterday();
-    let yesterday = moment(date).format("MM-DD-YYYY");
-    let today = moment().format("MM-DD-YYYY");
+    let yesterday = moment(date).format("YYYY-MM-DD");
+    let today = moment().format("YYYY-MM-DD");
+    let count = 0;
     for(dishCount = 0; dishCount < restaurantDishes.length; dishCount++){
       let userGesturesOnDishByUser = yield db.userGestures.findAll({
         attributes : ['created_at'],
@@ -167,14 +168,20 @@ function checkDislikeOfDish(restaurantDishesInfo, restaurantDishes, userId) {
       });
       let countOfCreationDate;
       let flag = 0;
-
       for(countOfCreationDate = 0; countOfCreationDate < userGesturesOnDishByUser.length ; countOfCreationDate++){
-        let dateOfDislike = moment(userGesturesOnDishByUser[countOfCreationDate].created_at).format("MM-DD-YYYY");
+        let dateOfDislike = moment(userGesturesOnDishByUser[countOfCreationDate].created_at).format("YYYY-MM-DD");
+        let dateBeforeOneMonth = moment(today).add(-30, 'days').format('YYYY-MM-DD');
+
         if(dateOfDislike === today || dateOfDislike === yesterday){
           flag = 1;
         }
+
+        if(dateOfDislike <= today && dateOfDislike >= dateBeforeOneMonth){
+          count = count + 1;
+        }
+
       }
-      if(flag === 0 && countOfCreationDate === userGesturesOnDishByUser.length){
+      if(flag === 0 && count < 5 && countOfCreationDate === userGesturesOnDishByUser.length){
         restaurantDishesInfo.restaurantDishes.push(restaurantDishes[dishCount]);
       }
     }
@@ -594,7 +601,8 @@ exports.getDIshes = function (req, res) {
     let restaurantData =  yield findRestaurantData(data.googleIds, restaurant_rating, restaurant_price,
       foodPreferenceData, cuisineArray);
     if(!sort_by_rating){
-      restaurantData = yield checkUserGesturesOnDishes(restaurantData, userId);    } else {
+      restaurantData = yield checkUserGesturesOnDishes(restaurantData, userId);
+    } else {
       let restaurantSortedData = _.sortBy(restaurantData, function(foodObject) {
         return foodObject.restaurant_rating;
       });
