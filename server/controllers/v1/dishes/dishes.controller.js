@@ -668,7 +668,7 @@ exports.getDIshes = function (req, res) {
  */
 exports.getSmartPic = function (req, res) {
   return co(function* () {
-    const restaurant_dish_id = req.params.restaurant_dish_id;
+    const restaurant_dish_id = req.query.restaurant_dish_id;
     let amenityCount, restaurantAmenities = [];
     let dishInformation = yield db.restaurantDish.find({
       where : {

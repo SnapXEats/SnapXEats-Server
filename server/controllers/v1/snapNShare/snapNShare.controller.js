@@ -270,7 +270,7 @@ exports.fileUploadToS3 = function (req, res) {
         attributes: ['name']
       });
 
-      let link = `http://ec2-user@ec2-18-216-193-78.us-east-2.compute.amazonaws.com:3000/api/v1/dishes/${dishInformation.restaurant_dish_id}`;
+      let link = `http://18.216.193.78:3000/api/v1/dishes/smartPhoto?url=snapXEatsURLSchemes://dishes&restaurant_dish_id=${dishInformation.restaurant_dish_id}`;
 
       let message = util.format(CONSTANTS.MESSAGE_FOR_SNAPNSHARE,userInfo.name,
         reviewInformation.restaurant_name,link);
