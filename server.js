@@ -16,6 +16,7 @@ const cors = require('cors');
 const cluster = require('cluster');
 const http = require('http');
 const appRoot = require('app-root-path');
+let deeplink = require('node-deeplink');
 
 const workers = process.env.WORKERS || req('os').cpus().length;
 
@@ -141,6 +142,15 @@ app.use(bodyParser.urlencoded({
 }));
 app.use(bodyParser.json({limit: '50mb'}));
 // load API routes
+app.get(
+  '/',
+  deeplink({
+    fallback: 'http://www.snapxeats.com/',
+    android_package_name: 'com.citylifeapps.cups',
+    ios_store_link:
+      'https://itunes.apple.com/us/app/cups-unlimited-coffee/id556462755?mt=8&uo=4'
+  })
+);
 require('./server/routes')(app);
 
 process.on('uncaughtException', (err) => {
