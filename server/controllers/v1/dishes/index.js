@@ -4,7 +4,7 @@ const controller = require('./dishes.controller');
 const router = require('express').Router();
 const auth = require('./../../../../lib/auth');
 
-router.get('/', auth.isAuthenticatedOrNot(), controller.getDIshes);
+router.get('/', auth.isAuthenticatedOrNot(), controller.getDishes);
 router.get('/:restaurant_dish_id', controller.getSmartPic);
 router.post('/', auth.isAuthenticated(), controller.restaurantDishOfUser);
 router.get('/user/smartPhotos', auth.isAuthenticated(), controller.getDishesOfUser);

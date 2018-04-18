@@ -86,7 +86,7 @@ function getRestaurantDetails(restaurantInfoId) {
 				attributes: ['restaurant_open_close_time', 'day_of_week']
 			}, {
 				model: db.restaurantDish,
-				attributes: ['dish_image_url', 'created_at'],
+				attributes: ['restaurant_dish_id', 'dish_image_url', 'created_at'],
 				include : [{
 					attributes : ['dish_label'],
 					model : db.restaurantDishLabel,
@@ -95,7 +95,10 @@ function getRestaurantDetails(restaurantInfoId) {
               $like : '%dish%'
             }
 					}
-				}]
+				},{
+          model : db.userReview,
+          attributes : ['audio_review_url', 'text_review']
+        }]
 			}]
 		}).then((restaurantInfo) => {
 			resolve(restaurantInfo);
@@ -119,14 +122,18 @@ function findRestaurantPics(restaurantInfoId) {
 			where : {
         restaurant_info_id : restaurantInfoId
 			},
-      limit : 5,
-      attributes: ['dish_image_url','created_at'],
+      attributes: ['restaurant_dish_id', 'dish_image_url','created_at'],
       order : [
         [db.restaurantDishLabel,'dish_label', 'ASC']
       ],
         include : [{
           attributes : ['dish_label'],
-          model : db.restaurantDishLabel
+          model : db.restaurantDishLabel,
+          where : {
+            dish_label: {
+              $notLike : '%dish%'
+            }
+          }
         }]
     }).then((restaurantPics) => {
       resolve(restaurantPics);
@@ -163,7 +170,13 @@ function findRestaurantPics(restaurantInfoId) {
  *   restaurant_dishes_info:
  *     type: object
  *     properties:
+ *       restaurant_dish_id:
+ *         type: string
  *       dish_image_url:
+ *         type: string
+ *       text_review:
+ *         type: string
+ *       audio_review_url:
  *         type: string
  *       created_date:
  *         type: string
@@ -237,22 +250,78 @@ exports.getRestaurantInforamtion = function (req, res) {
 		let restaurantInformation = yield getRestaurantDetails(restaurantInfoId);
 		let foodImageCount, picCount, amenityCount;
 		let restaurant_speciality = [], restaurant_pics = [], restaurantAmenities = [];
-		for(foodImageCount = 0 ; foodImageCount < restaurantInformation.restaurantDishes.length;
+		for(foodImageCount = 0 ; foodImageCount < restaurantInformation.restaurantDishes.length &&
+    restaurant_speciality.length < 5;
 		foodImageCount++){
-      restaurant_speciality.push({
-        dish_image_url : restaurantInformation.restaurantDishes[foodImageCount].dish_image_url
-      });
+		  restaurant_speciality.push({
+          dish_image_url : restaurantInformation.restaurantDishes[foodImageCount].dish_image_url
+        });
 		}
 
-		let restaurantAllPics = yield findRestaurantPics(restaurantInfoId);
+    for (foodImageCount = 0; foodImageCount < restaurantInformation.restaurantDishes.length &&
+    restaurant_pics.length < 5;
+         foodImageCount++) {
+      let audio_review_url = null,
+        text_review = null;
 
-    for(picCount = 0 ; picCount < restaurantAllPics.length; picCount++){
-      restaurant_pics.push({
-        dish_image_url : restaurantAllPics[picCount].dish_image_url,
-        created_date : restaurantAllPics[picCount].created_at
-      });
+      if (restaurantInformation.restaurantDishes[foodImageCount].userReview &&
+        restaurantInformation.restaurantDishes[foodImageCount].userReview.audio_review_url) {
+        audio_review_url = restaurantInformation.restaurantDishes[foodImageCount].userReview.audio_review_url;
+      }
+      if (restaurantInformation.restaurantDishes[foodImageCount].userReview &&
+        restaurantInformation.restaurantDishes[foodImageCount].userReview.text_review) {
+        text_review = restaurantInformation.restaurantDishes[foodImageCount].userReview.text_review;
+      }
+
+      if (audio_review_url || text_review) {
+        restaurant_pics.push({
+          restaurant_dish_id : restaurantInformation.restaurantDishes[foodImageCount].restaurant_dish_id,
+          dish_image_url: restaurantInformation.restaurantDishes[foodImageCount].dish_image_url,
+          audio_review_url: audio_review_url,
+          text_review: text_review,
+          created_date: restaurantInformation.restaurantDishes[foodImageCount].created_at
+        });
+      }
     }
 
+    for (foodImageCount = 0; foodImageCount < restaurantInformation.restaurantDishes.length &&
+    restaurant_pics.length < 5;
+         foodImageCount++) {
+      let audio_review_url,
+        text_review;
+
+      if (restaurantInformation.restaurantDishes[foodImageCount].userReview &&
+        restaurantInformation.restaurantDishes[foodImageCount].userReview.audio_review_url) {
+        audio_review_url = restaurantInformation.restaurantDishes[foodImageCount].userReview.audio_review_url;
+      }
+
+      if (restaurantInformation.restaurantDishes[foodImageCount].userReview &&
+        restaurantInformation.restaurantDishes[foodImageCount].userReview.text_review) {
+        text_review = restaurantInformation.restaurantDishes[foodImageCount].userReview.text_review;
+      }
+
+      if (restaurant_pics.length < 5 && !audio_review_url && !text_review) {
+        restaurant_pics.push({
+          restaurant_dish_id : restaurantInformation.restaurantDishes[foodImageCount].restaurant_dish_id,
+          dish_image_url: restaurantInformation.restaurantDishes[foodImageCount].dish_image_url,
+          audio_review_url: null,
+          text_review: null,
+          created_date: restaurantInformation.restaurantDishes[foodImageCount].created_at
+        });
+      }
+    }
+
+    let restaurantAllPics = yield findRestaurantPics(restaurantInfoId);
+
+    for (picCount = 0; picCount < restaurantAllPics.length && restaurant_pics.length < 5; picCount++) {
+      restaurant_pics.push({
+        restaurant_dish_id : restaurantAllPics[picCount].restaurant_dish_id,
+        dish_image_url: restaurantAllPics[picCount].dish_image_url,
+        created_date: restaurantAllPics[picCount].created_at,
+        audio_review_url: null,
+        text_review: null
+      });
+    }
     let amenities = restaurantInformation.restaurantAminities;
 
     for(amenityCount = 0 ; amenityCount < amenities.length; amenityCount++){
@@ -292,109 +361,6 @@ exports.getRestaurantInforamtion = function (req, res) {
 			message: err.message
 		});
 	});
-};
-
-/**
- * @swagger
- * definition:
- *   restaurantInformation:
- *     type: object
- *     properties:
- *       restaurant_info_id:
- *         type: string
- *       restaurant_name:
- *         type: string
- *       restaurant_address:
- *         type: string
- *       isOpenNow:
- *         type: boolean
- *       restaurant_timings:
- *         type: array
- *         items:
- *           $ref: '#/definitions/restaurant_timing'
- *       restaurant_pics:
- *          type: array
- *          items:
- *            $ref: '#/definitions/restaurant_dishes_info'
- *       restaurant_aminities:
- *          type: array
- *          items:
- *            type: string
- */
-
-
-/**
- * @swagger
- * /api/v1/restaurant/restaurantDetails/{restaurantInfoId}:
- *   get:
- *     summary: Get Details of restaurant
- *     description: Get Details of restaurant as an JSON Object
- *     tags:
- *       - Restaurant
- *     parameters:
- *      - in: path
- *        name: restaurantInfoId
- *        schema:
- *          type: string
- *        description: restaurant's unique ID
- *     produces:
- *       - application/json
- *     responses:
- *       200:
- *         description: "successful operation"
- *         schema:
- *           type: object
- *           "$ref": "#/definitions/restaurantInformation"
- */
-
-exports.getRestaurantDetails = function (req, res) {
-  return co(function* () {
-    const restaurantInfoId = req.params.restaurantInfoId;
-    let restaurantDetails = {};
-    let restaurantInformation = yield getRestaurantDetails(restaurantInfoId);
-    let picCount, aminityCount;
-    let restaurant_pics = [], restaurantAminities = [];
-
-    let restaurantAllPics = yield findRestaurantPics(restaurantInfoId);
-
-    for(picCount = 0 ; picCount < restaurantAllPics.length; picCount++){
-      restaurant_pics.push({
-        dish_image_url : restaurantAllPics[picCount].dish_image_url,
-				created_date : restaurantAllPics[picCount].created_at
-      });
-    }
-    let aminities = restaurantInformation.restaurantAminities;
-
-    for(aminityCount = 0 ; aminityCount < aminities.length; aminityCount++){
-      restaurantAminities.push(
-      	aminities[aminityCount].aminity_name.capitalize()
-        );
-    }
-    let address_url = 'https://maps.googleapis.com/maps/api/place/details/json?placeid=' +
-      restaurantInformation.restaurant_place_id + '&key=' + key;
-
-    restaurantDetails.restaurant_info_id = restaurantInformation.restaurant_info_id;
-    restaurantDetails.restaurant_name = restaurantInformation.restaurant_name;
-    restaurantDetails.restaurant_address = restaurantInformation.restaurant_address;
-    restaurantDetails.restaurant_timings = restaurantInformation.restaurantTimings;
-    restaurantDetails.restaurant_aminities = restaurantAminities;
-    restaurantDetails.restaurant_pics = restaurant_pics;
-
-    let isHotelOpen = yield getPlaceInformation(address_url);
-    if (isHotelOpen) {
-      restaurantDetails.isOpenNow = isHotelOpen.isOpenNow;
-    }
-    return ({
-      restaurantDetails
-    });
-  }).then((restaurantDetails) => {
-    res.status(200)
-      .json(restaurantDetails);
-  }).catch((err) => {
-    res.status(400).json({
-      message: err.message
-    });
-  });
 };
 
 /**
