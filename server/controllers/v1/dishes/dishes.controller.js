@@ -498,7 +498,7 @@ function findRestaurantData(restaurantArray,restaurant_rating, restaurant_price,
  *           type: object
  *           "$ref": "#/definitions/dishesInfo"
  */
-exports.getDIshes = function (req, res) {
+exports.getDishes = function (req, res) {
   return co(function* () {
     const googleIds = [];
     let cuisineArray = [];
