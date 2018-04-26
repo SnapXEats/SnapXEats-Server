@@ -718,7 +718,7 @@ exports.getSmartPic = function (req, res) {
 /**
  * @swagger
  * paths:
- *  /api/v1/dishes:
+ *  /api/v1/dishes/:
  *    post:
  *      summary: insert user downloaded smart picture.
  *      tags:

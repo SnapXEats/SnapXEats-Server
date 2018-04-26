@@ -225,7 +225,7 @@ function filterUserRewardHistoryForLastWeek(rewardHistory){
             reward_dishes : foodUniqueHistory[countForUniqueHistory].reward_dishes || []
           };
           if(today === rewardDate){
-            jsonForFoodJourney.formattedDate = 'today';
+            jsonForFoodJourney.formattedDate = 'Today';
           } else {
             jsonForFoodJourney.formattedDate = moment(foodUniqueHistory[countForUniqueHistory].created_at).format("dddd, MMMM Do YYYY");
           }
@@ -244,7 +244,7 @@ function filterUserRewardHistoryForLastWeek(rewardHistory){
           restaurant_image_url : reward[0].restaurantInfo.restaurantDishes[0].dish_image_url
         };
         if(today === rewardDate){
-          jsonForFoodJourney.formattedDate = 'today';
+          jsonForFoodJourney.formattedDate = 'Today';
         } else {
           jsonForFoodJourney.formattedDate = moment(reward[0].created_at).format("dddd, MMMM Do YYYY");
         }
