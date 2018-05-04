@@ -99,7 +99,14 @@ function getRestaurantDetails(restaurantInfoId) {
           model : db.userReview,
           attributes : ['audio_review_url', 'text_review']
         }]
-			}]
+			}, {
+        model: db.restaurantCuisine,
+        attributes: ['cuisine_info_id'],
+        include: [{
+          model: db.cuisineInfo,
+          attributes: ['cuisine_name']
+        }]
+      }]
 		}).then((restaurantInfo) => {
 			resolve(restaurantInfo);
 		}).catch((err) => {
@@ -345,11 +352,18 @@ exports.getRestaurantInforamtion = function (req, res) {
 		restaurantDetails.restaurant_speciality = restaurant_speciality;
     restaurantDetails.restaurant_amenities = restaurantAmenities;
 		restaurantDetails.restaurant_pics = restaurant_pics;
+		restaurantDetails.restaurant_type = '';
 
 		let isHotelOpen = yield getPlaceInformation(address_url);
 		if (isHotelOpen) {
 			restaurantDetails.isOpenNow = isHotelOpen.isOpenNow;
 		}
+
+    if(restaurantInformation.restaurantCuisine && restaurantInformation.restaurantCuisine.cuisineInfo){
+      restaurantDetails.restaurant_type = restaurantInformation.restaurantCuisine.cuisineInfo.cuisine_name
+    }
+
+
 		return ({
 			restaurantDetails
 		});
