@@ -225,6 +225,8 @@ function findRestaurantPics(restaurantInfoId) {
  *          type: array
  *          items:
  *            type: string
+ *       restaurant_type:
+ *         type: string
  */
 
 /**
