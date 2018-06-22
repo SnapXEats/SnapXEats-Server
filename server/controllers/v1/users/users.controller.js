@@ -454,3 +454,59 @@ exports.loggedOutUser = function (req, res) {
     });
   });
 };
+
+
+
+/**
+ * @swagger
+ * definition:
+ *   userRewardPoints:
+ *     type: object
+ *     properties:
+ *       userRewardPoint:
+ *         type: integer
+ */
+
+/**
+ * @swagger
+ * /api/v1/users/rewards:
+ *   get:
+ *     summary: Get reward point of user
+ *     description: Get reward point of user from this API
+ *     tags:
+ *       - Users
+ *     produces:
+ *       - application/json
+ *     parameters:
+ *       - in: header
+ *         name: Authorization
+ *         description: an authorization header (Bearer eyJhbGciOiJI...)
+ *         required: true
+ *         type: string
+ *     responses:
+ *       200:
+ *         description: "successful operation"
+ *         schema:
+ *           type: object
+ *           "$ref": "#/definitions/userRewardPoints"
+ */
+
+exports.getRewardPoint = function (req, res) {
+  return co(function* () {
+    const user_id = req.decodedData.user_id;
+    let userRewardPoint = yield db.userRewards.sum('reward_point',{
+      where : {
+        user_id : user_id
+      }
+    });
+
+    return ({
+      userRewardPoint : userRewardPoint || 0
+    });
+  }).then((userRewardPoint) => {
+    res.status(200)
+      .json(userRewardPoint);
+  }).catch((err) => {
+    res.status(400).json(err);
+  });
+};
