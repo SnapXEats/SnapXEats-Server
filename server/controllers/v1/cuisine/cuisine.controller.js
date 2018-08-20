@@ -305,7 +305,7 @@ function filterCuisineInfo(userId, cuisineList) {
  */
 exports.getCuisineList = function (req, res) {
   return co(function* () {
-		const distance = 1610;
+		const distance = 8050;
 		const googleIds = [];
 		if(req.query.latitude && req.query.latitude){
       let data = yield getRestaurant(req.query.latitude, req.query.longitude, distance, googleIds);

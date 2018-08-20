@@ -339,6 +339,10 @@ exports.getRestaurantInforamtion = function (req, res) {
       );
     }
 
+    const restaurantTimings = _.uniq(restaurantInformation.restaurantTimings, function(restaurant){
+            return restaurant.day_of_week;
+          });
+        const restaurant_amenities = _.uniq(restaurantAmenities);
 		let address_url = 'https://maps.googleapis.com/maps/api/place/details/json?placeid=' +
 			restaurantInformation.restaurant_place_id + '&key=' + key;
 
@@ -350,9 +354,9 @@ exports.getRestaurantInforamtion = function (req, res) {
 		restaurantDetails.restaurant_address = restaurantInformation.restaurant_address;
 		restaurantDetails.restaurant_rating = restaurantInformation.restaurant_rating;
 		restaurantDetails.restaurant_price = restaurantInformation.restaurant_price;
-		restaurantDetails.restaurant_timings = restaurantInformation.restaurantTimings;
+		restaurantDetails.restaurant_timings = restaurantTimings;
 		restaurantDetails.restaurant_speciality = restaurant_speciality;
-    restaurantDetails.restaurant_amenities = restaurantAmenities;
+    restaurantDetails.restaurant_amenities = restaurant_amenities;
 		restaurantDetails.restaurant_pics = restaurant_pics;
 		restaurantDetails.restaurant_type = '';
 

@@ -270,7 +270,7 @@ exports.fileUploadToS3 = function (req, res) {
         attributes: ['name']
       });
 
-      let link = `http://18.216.193.78:3000/?url=snapxeats://dishes?id=${dishInformation.restaurant_dish_id}`;
+      let link = `https://app.snapxeats.com/?url=snapxeats://dishes?id=${dishInformation.restaurant_dish_id}`;
 
       let message = util.format(CONSTANTS.MESSAGE_FOR_SNAPNSHARE,userInfo.name,
         reviewInformation.restaurant_name,link);

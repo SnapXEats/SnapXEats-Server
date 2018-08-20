@@ -503,7 +503,7 @@ exports.getDishes = function (req, res) {
     const googleIds = [];
     let cuisineArray = [];
     let foodPreferenceData = [];
-    let distance = 1610;
+    let distance = 8050;
     let restaurant_rating, restaurant_price, sort_by_distance;
     let sort_by_rating = 0;
     let userId;
